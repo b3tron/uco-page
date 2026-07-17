@@ -1,0 +1,2636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Registration Deck — UCSB Schedule Optimizer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B2E4A;
+    --navy-deep:#071F33;
+    --gold:#FDB813;
+    --paper:#FAF6EC;
+    --paper-dim:#F1ECDD;
+    --ink:#1C2530;
+    --ink-soft:#5B6672;
+    --line:#D8CFB6;
+    --green:#2F7B4F;
+    --coral:#C24A2A;
+    --card-radius:2px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif; font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{ font-family:'Oswald',sans-serif; letter-spacing:.02em; text-transform:uppercase; margin:0; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  button{ font-family:'IBM Plex Sans',sans-serif; cursor:pointer; }
+  input, select{ font-family:'IBM Plex Mono',monospace; }
+
+  /* ===== Header ===== */
+  .topbar{
+    background:var(--navy); color:var(--paper);
+    padding:18px 28px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:6px solid var(--gold);
+  }
+  .brand{ display:flex; align-items:baseline; gap:12px; }
+  .brand h1{ font-size:22px; font-weight:700; color:#fff; }
+  .brand .tag{ font-size:11px; color:var(--gold); letter-spacing:.12em; }
+  .stat-row{ display:flex; gap:22px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#CBD8E3; }
+  .stat-row b{ color:#fff; font-size:15px; display:block; font-family:'Oswald',sans-serif; }
+
+  .tabs{ display:flex; background:var(--navy-deep); }
+  .tabs button{
+    background:transparent; border:none; color:#9FB3C4; padding:11px 22px;
+    font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.06em; font-size:13px;
+    border-bottom:3px solid transparent;
+  }
+  .tabs button.active{ color:var(--gold); border-bottom-color:var(--gold); background:rgba(253,184,19,0.06); }
+  .tabs button:hover{ color:#fff; }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:22px 24px 60px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  /* ===== Buttons ===== */
+  .btn{
+    border:1.5px solid var(--navy); background:var(--paper); color:var(--navy);
+    padding:7px 14px; font-size:12px; font-weight:600; border-radius:var(--card-radius);
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .btn:hover{ background:var(--navy); color:#fff; }
+  .btn.primary{ background:var(--gold); border-color:var(--gold); color:var(--navy-deep); }
+  .btn.primary:hover{ background:#e6a70f; }
+  .btn.ghost{ border-color:var(--line); color:var(--ink-soft); }
+  .btn.ghost:hover{ background:var(--paper-dim); color:var(--ink); }
+  .btn.danger{ border-color:var(--coral); color:var(--coral); }
+  .btn.danger:hover{ background:var(--coral); color:#fff; }
+  .btn.small{ padding:4px 9px; font-size:11px; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn:disabled:hover{ background:var(--paper); color:var(--navy); }
+
+  /* ===== Course editor ===== */
+  .course-card{
+    background:#fff; border:1px solid var(--line); border-left:5px solid var(--course-color,var(--navy));
+    margin-bottom:16px; border-radius:var(--card-radius);
+  }
+  .course-head{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--paper-dim); }
+  .course-head input.code{ font-family:'Oswald',sans-serif; font-size:16px; text-transform:uppercase; border:none; background:transparent; width:180px; font-weight:600; color:var(--navy); }
+  /* Collapsible course cards */
+  .course-toggle{
+    background:transparent; border:none; color:var(--navy); font-size:12px; line-height:1;
+    padding:4px 5px; cursor:pointer; transition:transform .15s ease; flex:none; border-radius:2px;
+  }
+  .course-toggle:hover{ background:rgba(11,46,74,.08); }
+  .course-card.collapsed .course-toggle{ transform:rotate(-90deg); }
+  .course-card.collapsed .course-collapsible{ display:none; }
+  .course-card.collapsed{ margin-bottom:8px; }
+  .list-tools{ display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+  .bg-preview{
+    width:100%; height:120px; border:1px solid var(--line); border-radius:2px; margin-bottom:10px;
+    background:var(--paper-dim) center/cover no-repeat; display:flex; align-items:center; justify-content:center;
+    color:var(--ink-soft); font-size:12px; font-family:'IBM Plex Mono',monospace; text-align:center;
+  }
+  .bg-specs{ font-size:12px; color:var(--ink-soft); line-height:1.6; }
+  .bg-specs code{ background:var(--paper-dim); padding:1px 4px; border-radius:2px; }
+  .course-body{ padding:12px 16px; }
+  .lecture-block{ border:1px dashed var(--line); padding:10px 12px; margin-bottom:10px; border-radius:var(--card-radius); }
+  .lecture-block-head{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-bottom:6px; display:flex; justify-content:space-between; }
+  .field-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px; }
+  .field-row label{ font-size:10px; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:2px; letter-spacing:.04em; }
+  .field-row .f{ display:flex; flex-direction:column; }
+  .field-row input, .field-row select{
+    border:1px solid var(--line); padding:5px 7px; font-size:12px; border-radius:2px; background:#fff;
+  }
+  .days-picker{ display:flex; gap:3px; }
+  .days-picker button{
+    width:24px; height:24px; border:1px solid var(--line); background:#fff; font-size:11px; font-weight:600; border-radius:2px; color:var(--ink-soft);
+  }
+  .days-picker button.on{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .section-block{ background:var(--paper-dim); padding:8px 10px; margin:6px 0 0 16px; border-radius:2px; border-left:3px solid var(--gold); }
+  .row-actions{ display:flex; gap:6px; }
+
+  /* ===== Settings tab ===== */
+  .settings-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .card{ background:#fff; border:1px solid var(--line); padding:16px; border-radius:var(--card-radius); }
+  .card h3{ font-size:14px; margin-bottom:10px; color:var(--navy); }
+  .weight-row{ margin-bottom:14px; }
+  .weight-row .lbl{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
+  .weight-row input[type=range]{ width:100%; accent-color:var(--gold); }
+  table.matrix{ border-collapse:collapse; width:100%; font-size:11px; }
+  table.matrix th, table.matrix td{ border:1px solid var(--line); padding:4px 6px; text-align:center; }
+  table.matrix th{ background:var(--paper-dim); font-family:'Oswald',sans-serif; font-weight:500; text-transform:uppercase; font-size:10px; }
+  table.matrix input{ width:38px; border:none; text-align:center; background:transparent; }
+  .zone-tag-list{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .zone-tag{ background:var(--paper-dim); border:1px solid var(--line); padding:4px 8px; border-radius:12px; font-size:11px; display:flex; gap:6px; align-items:center; }
+  .zone-tag button{ border:none; background:none; color:var(--coral); font-weight:700; padding:0; }
+
+  /* ===== Plans tab ===== */
+  .plans-layout{ display:grid; grid-template-columns:230px 1fr; gap:20px; }
+  .plan-list{ display:flex; flex-direction:column; gap:6px; max-height:78vh; overflow-y:auto; }
+  .plan-item{ background:#fff; border:1px solid var(--line); padding:8px 10px; border-radius:2px; cursor:pointer; }
+  .plan-item:hover{ border-color:var(--navy); }
+  .plan-item.active{ border-color:var(--gold); border-width:2px; background:#FFFBF0; }
+  .plan-item .pn{ font-family:'Oswald',sans-serif; font-size:13px; color:var(--navy); }
+  .plan-item .ps{ font-size:10px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; }
+
+  .ticket{
+    background:#fff; border:1px solid var(--line); position:relative; border-radius:4px;
+    box-shadow:0 2px 10px rgba(11,46,74,0.08);
+  }
+  .ticket-head{
+    background:var(--navy); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;
+    border-radius:4px 4px 0 0;
+  }
+  .ticket-head .plan-title{ font-size:20px; }
+  .ticket-head .plan-sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold); }
+  .ticket-actions{ display:flex; gap:8px; }
+  .perforation{
+    height:0; border-top:2px dashed var(--line); margin:0 18px; position:relative;
+  }
+  .perforation::before, .perforation::after{
+    content:''; position:absolute; top:-9px; width:16px; height:16px; background:var(--paper); border-radius:50%;
+  }
+  .perforation::before{ left:-27px; } .perforation::after{ right:-27px; }
+
+  .grid-wrap{ padding:18px 20px 6px; overflow-x:auto; }
+  .cal-grid{ display:grid; grid-template-columns:52px repeat(5,1fr); min-width:640px; border:1px solid var(--line); }
+  .cal-head{ background:var(--paper-dim); font-family:'Oswald',sans-serif; text-align:center; font-size:12px; padding:6px 0; border-left:1px solid var(--line); text-transform:uppercase; letter-spacing:.05em; color:var(--navy); }
+  .cal-head:first-child{ border-left:none; }
+  .cal-times{ position:relative; }
+  .cal-time-label{ position:absolute; right:6px; font-size:9px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; transform:translateY(-50%); }
+  .cal-col{ position:relative; border-left:1px solid var(--line); background:repeating-linear-gradient(to bottom, transparent 0 39px, #F4EFE0 39px 40px); }
+  .cal-block{
+    position:absolute; left:2px; right:2px; border-radius:2px; padding:3px 5px; font-size:10px; overflow:hidden;
+    color:#fff; line-height:1.25; box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .cal-block.section{ opacity:.82; background-image:repeating-linear-gradient(45deg, rgba(255,255,255,.12) 0 6px, transparent 6px 12px); }
+  .cal-block b{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; }
+  .cal-block .loc{ font-size:9px; opacity:.9; }
+
+  .detail-list{ padding:14px 20px 20px; }
+  .detail-row{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--paper-dim); gap:10px; }
+  .detail-row:last-child{ border-bottom:none; }
+  .detail-left{ display:flex; gap:10px; align-items:center; }
+  .swatch{ width:10px; height:10px; border-radius:2px; flex:none; }
+  .detail-code{ font-family:'Oswald',sans-serif; font-size:13px; color:var(--navy); }
+  .detail-meta{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); }
+  .badge{ font-size:10px; padding:2px 7px; border-radius:10px; font-family:'IBM Plex Mono',monospace; }
+  .badge.rating{ background:#EAF3EC; color:var(--green); }
+  .badge.seats-ok{ background:#EAF3EC; color:var(--green); }
+  .badge.seats-low{ background:#FDEDE7; color:var(--coral); }
+  .badge.tight{ background:#FDEDE7; color:var(--coral); }
+
+  .score-strip{ display:flex; gap:18px; padding:10px 20px; background:var(--paper-dim); font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--ink-soft); border-top:1px solid var(--line); }
+  .score-strip b{ color:var(--ink); }
+
+  .empty-note{ padding:40px; text-align:center; color:var(--ink-soft); }
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff;
+    padding:10px 18px; border-radius:4px; font-size:12px; border-left:4px solid var(--gold); z-index:99; opacity:0; transition:opacity .25s;
+  }
+  .toast.show{ opacity:1; }
+
+  .plans-topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .nav-btns{ display:flex; gap:6px; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:12px; }
+
+  /* ===== Validation / QA ===== */
+  .field-row input.input-error, .field-row select.input-error{
+    border-color:var(--coral) !important; background:#FDEDE7 !important;
+    animation: flashError 1.2s ease-out;
+  }
+  @keyframes flashError{ 0%{ box-shadow:0 0 0 3px rgba(194,74,42,.35);} 100%{ box-shadow:0 0 0 0 rgba(194,74,42,0);} }
+  .course-meta{ font-size:11px; color:var(--ink-soft); padding:0 16px 8px; font-family:'IBM Plex Mono',monospace; }
+  .import-report{ margin-top:8px; font-size:11px; border:1px solid var(--line); border-radius:2px; background:var(--paper-dim); padding:8px 10px; }
+  .import-report .ok{ color:var(--green); }
+  .import-report .warn{ color:var(--coral); }
+  .qa-panel{ margin-top:16px; }
+  .qa-results{ font-family:'IBM Plex Mono',monospace; font-size:11px; white-space:pre-wrap; background:var(--navy-deep); color:#CBD8E3; padding:10px; border-radius:2px; max-height:260px; overflow-y:auto; margin-top:8px; }
+  .qa-results .pass{ color:#7fd99a; }
+  .qa-results .fail{ color:#ff8d78; }
+
+  @media print{
+    .topbar, .tabs, .plans-topbar, .plan-list, .ticket-actions, .btn{ display:none !important; }
+    body{ background:#fff !important; background-image:none !important; }
+    .plans-layout{ display:block; }
+    .ticket{ box-shadow:none; border:1px solid #999; }
+    .wrap{ padding:0; max-width:none; }
+    .detail-row, .cal-grid, .score-strip{ break-inside: avoid; }
+    .print-only{ display:block !important; }
+    @page{ margin:1.4cm; }
+    @page{ @bottom-right{ content: "Page " counter(page) " of " counter(pages); font-size:9px; color:#666; } }
+  }
+  .print-only{ display:none; }
+  .modal-overlay{ position:fixed; inset:0; background:rgba(7,31,51,.6); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal-box{ background:#fff; padding:20px; border-radius:4px; max-width:640px; width:100%; max-height:85vh; overflow-y:auto; }
+
+  /* ===== Accessibility & mobile ===== */
+  .days-picker button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible{
+    outline:2px solid var(--gold); outline-offset:1px;
+  }
+  @media (max-width: 900px){
+    .settings-grid{ grid-template-columns:1fr; }
+    .plans-layout{ grid-template-columns:1fr; }
+    .plan-list{ max-height:220px; }
+    .stat-row{ gap:12px; font-size:11px; }
+    .topbar{ flex-wrap:wrap; gap:10px; padding:14px 16px; }
+    .field-row .f{ min-width:0; }
+    .btn.small{ padding:7px 11px; } /* slightly larger tap target on touch */
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>Registration Deck</h1>
+    <span class="tag">UCSB Schedule Optimizer</span>
+    <select id="quarterSelect" onchange="onQuarterSelectChange()"
+      style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:#fff;padding:4px 6px;border-radius:2px;font-size:11px;">
+      <option value="">— no saved quarters —</option>
+    </select>
+    <input id="quarterLabel" placeholder="e.g. Fall 2026" oninput="onQuarterLabelChange()"
+      style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:#fff;padding:4px 8px;border-radius:2px;font-size:11px;width:110px;">
+    <button class="btn ghost small" onclick="saveCurrentQuarter()" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.3);color:#fff;">Save Quarter</button>
+  </div>
+  <div class="stat-row">
+    <div>Courses<b id="statCourses">0</b></div>
+    <div>Valid Plans<b id="statPlans">0</b></div>
+    <div>Marked Full<b id="statExcluded">0</b></div>
+    <div>Data Issues<b id="statIssues">0</b></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="exportModal" style="display:none;">
+  <div class="modal-box">
+    <h3 id="exportModalTitle" style="margin-bottom:8px;">Export</h3>
+    <p style="color:var(--ink-soft);font-size:12px;margin-bottom:8px;">
+      If "Try Direct Download" doesn't save a file — common inside Claude's published-artifact preview,
+      which blocks native downloads — use <b>Copy to Clipboard</b> below, then paste into a new text file
+      and save it with a <code>.json</code> (or <code>.zip</code>-notes, see below) extension yourself.
+    </p>
+    <textarea id="exportModalText" readonly style="width:100%;height:220px;font-family:'IBM Plex Mono',monospace;font-size:10px;border:1px solid var(--line);padding:8px;border-radius:2px;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+      <button class="btn primary small" onclick="copyExportModalText()">Copy to Clipboard</button>
+      <button class="btn small" id="exportModalDownloadBtn">Try Direct Download</button>
+      <button class="btn ghost small" onclick="closeExportModal()">Close</button>
+    </div>
+    <div id="exportModalExtra" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" style="display:none;">
+  <div class="modal-box" style="max-width:420px;text-align:center;">
+    <p id="confirmModalMsg" style="margin-bottom:16px;font-size:13px;"></p>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn danger small" id="confirmModalYes">Yes, Continue</button>
+      <button class="btn ghost small" onclick="closeConfirmModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bgModal" style="display:none;">
+  <div class="modal-box" style="max-width:520px;">
+    <h3 style="margin-bottom:8px;">Customize Background</h3>
+    <div class="bg-preview" id="bgPreview">No custom background yet</div>
+    <div class="bg-specs" style="margin-bottom:12px;">
+      <b>For the best-looking result:</b><br>
+      &bull; Dimensions: <code>1920&times;1080</code> or larger, landscape (16:9). Smaller images will look soft when stretched.<br>
+      &bull; Format: <code>JPG</code>, <code>PNG</code>, or <code>WebP</code>. Keep it under about <code>3&nbsp;MB</code> so the page stays fast.<br>
+      &bull; Style: subtle, low-contrast, or lightly textured images read best. A translucent paper overlay is applied automatically so text stays readable &mdash; use the slider below to tune it.<br>
+      &bull; The image is centered, scaled to cover the window, and stays fixed while you scroll. It never appears on printouts.
+    </div>
+    <label class="btn primary small" style="display:inline-flex;align-items:center;">Choose Image&hellip;
+      <input type="file" accept="image/*" style="display:none" onchange="handleBgFile(event)">
+    </label>
+    <div class="weight-row" style="margin-top:14px;">
+      <div class="lbl"><span>Overlay strength (higher = more readable)</span><span id="bgOverlayVal" class="mono"></span></div>
+      <input type="range" min="0.3" max="0.97" step="0.01" id="bgOverlay" oninput="onBgOverlayChange()" style="width:100%;accent-color:var(--gold);">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+      <button class="btn danger small" onclick="removeBackground()">Remove Background</button>
+      <button class="btn ghost small" onclick="closeBgModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="quarterPromptModal" style="display:none;">
+  <div class="modal-box" style="max-width:420px;text-align:center;">
+    <h3 id="quarterPromptTitle" style="margin-bottom:8px;">Name this quarter?</h3>
+    <p id="quarterPromptMsg" style="color:var(--ink-soft);font-size:12px;margin-bottom:14px;"></p>
+    <input id="quarterPromptInput" placeholder="e.g. Fall 2026" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:2px;margin-bottom:14px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;">
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn primary small" id="quarterPromptConfirmBtn" onclick="confirmQuarterPrompt()">Start</button>
+      <button class="btn ghost small" onclick="skipQuarterPrompt()">Skip / No Name</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button data-tab="courses" class="active">1 · Courses</button>
+  <button data-tab="settings">2 · Buildings &amp; Weights</button>
+  <button data-tab="plans">3 · Plan Deck</button>
+</div>
+
+<div class="wrap">
+
+  <!-- COURSES TAB -->
+  <div class="panel active" id="panel-courses">
+    <div id="freshnessBanner"></div>
+    <p style="color:var(--ink-soft);max-width:640px;margin-bottom:14px;">
+      Enter the courses you're considering, pulled from GOLD. Each course can have several possible <b>Lectures</b>,
+      and each lecture can have several <b>Sections</b> (discussion/lab). The optimizer will only build schedules from
+      combinations that don't overlap in time.
+    </p>
+    <div class="card" style="margin-bottom:18px;">
+      <h3 style="margin-bottom:8px;">Paste From GOLD Course Search</h3>
+      <p style="color:var(--ink-soft);font-size:12px;margin-bottom:8px;">
+        Select rows on the class search results page, copy, and paste below — you can paste <b>several courses at
+        once</b> and they'll be split apart automatically. This reads the exact columns GOLD gives you (enroll codes,
+        days, times, locations, Full/Closed status) and auto-marks anything already full or closed.
+        <a href="https://my.sa.ucsb.edu/public/curriculum/coursesearch.aspx" target="_blank" rel="noopener">Open GOLD course search →</a>
+      </p>
+      <textarea id="pasteListing" rows="5" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);padding:8px;border-radius:2px;" placeholder="MATH 3A	CALC WITH APPLI 1				PORTER M J&#10;M W F	9:00 am - 9:50 am	BUCHN1910	131 / 144&#10;MATH 3A		Full	29694		T	8:00 am - 8:50 am	GIRV 2119	25 / 25&#10;RG ST 30	JUDAISM	Full		MEDINA R W&#10;T R	9:30 am - 10:45am	SH 1431	50 / 50	..."></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;">
+        <button class="btn primary small" onclick="importListingFromUI()">Parse &amp; Add/Update Courses</button>
+        <span id="importSummary" style="font-size:11px;color:var(--ink-soft);align-self:center;"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <h3 style="margin-bottom:8px;">Paste Course Description (optional)</h3>
+      <p style="color:var(--ink-soft);font-size:12px;margin-bottom:8px;">
+        Paste the "Full Title / Description / PreRequisite / College / Units / Grading" block from a course's detail page
+        to attach units and prerequisites to a course you've already imported above.
+      </p>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <select id="descTargetCourse" style="border:1px solid var(--line);padding:6px;border-radius:2px;flex:none;width:200px;"></select>
+      </div>
+      <textarea id="pasteDescription" rows="4" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);padding:8px;border-radius:2px;" placeholder="Full Title:	Differential Equations&#10;Description:	First and second order differential equations...&#10;PreRequisite:	Math 4A or Math 4AI with a minimum grade of C.&#10;College:	L&S&#10;Units:	4.0&#10;Grading:	Optional"></textarea>
+      <div style="margin-top:8px;">
+        <button class="btn primary small" onclick="applyDescriptionFromUI()">Attach To Selected Course</button>
+      </div>
+    </div>
+
+    <div class="list-tools" id="courseListTools" style="display:none;">
+      <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);">Your Courses</span>
+      <button class="btn ghost small" onclick="setAllCollapsed(false)">Expand All</button>
+      <button class="btn ghost small" onclick="setAllCollapsed(true)">Collapse All</button>
+    </div>
+    <div id="courseList"></div>
+    <button class="btn primary" onclick="addCourse()">+ Add Course</button>
+    <div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;">
+      <button class="btn ghost" id="undoBtn" onclick="undo()" title="Ctrl+Z">↶ Undo</button>
+      <button class="btn ghost" id="redoBtn" onclick="redo()" title="Ctrl+Shift+Z">↷ Redo</button>
+      <span style="width:1px;height:20px;background:var(--line);"></span>
+      <button class="btn" onclick="loadSample()">Load Sample Data</button>
+      <button class="btn ghost" onclick="exportJSON()">Download Backup (.json)</button>
+      <button class="btn ghost" onclick="downloadAllQuarters()">Download All Quarters (.zip)</button>
+      <span id="dirtyDot" title="Unsaved changes" style="visibility:hidden;width:8px;height:8px;border-radius:50%;background:var(--coral);display:inline-block;"></span>
+      <label class="btn ghost" style="display:inline-flex;align-items:center;">Restore Backup
+        <input type="file" accept="application/json" style="display:none" onchange="importJSON(event)">
+      </label>
+      <button class="btn danger" onclick="clearAll()">Clear Everything</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-grid">
+      <div class="card">
+        <h3>Priority Weights</h3>
+        <p style="color:var(--ink-soft);font-size:12px;margin-bottom:14px;">
+          Controls how plans are ranked. These don't affect which plans are valid — only the order.
+        </p>
+        <div class="weight-row">
+          <div class="lbl"><span>Professor Rating</span><span id="wRatingVal" class="mono"></span></div>
+          <input type="range" min="0" max="1" step="0.05" id="wRating" oninput="onWeightChange()">
+        </div>
+        <div class="weight-row">
+          <div class="lbl"><span>Travel Risk (avoid tight walks)</span><span id="wTravelVal" class="mono"></span></div>
+          <input type="range" min="0" max="1" step="0.05" id="wTravel" oninput="onWeightChange()">
+        </div>
+        <div class="weight-row">
+          <div class="lbl"><span>Seat Safety (prefer open seats)</span><span id="wSeatsVal" class="mono"></span></div>
+          <input type="range" min="0" max="1" step="0.05" id="wSeats" oninput="onWeightChange()">
+        </div>
+        <div class="weight-row">
+          <div class="lbl"><span>Default Rating (unrated professors)</span><span id="wDefaultRatingVal" class="mono"></span></div>
+          <input type="range" min="0" max="5" step="0.1" id="wDefaultRating" oninput="onDefaultRatingChange()">
+        </div>
+        <p style="color:var(--ink-soft);font-size:12px;margin-bottom:14px;">
+          Stands in for the rating when a lecture has none entered. 0 would penalize unrated professors
+          as if confirmed bad; too high risks rewarding a real 1-star average. 3.0 (the default) treats
+          "no data" as neutral — adjust to match how you'd want to gamble on an unknown.
+        </p>
+        <button class="btn primary" onclick="rebuild(true)">Recalculate Plans</button>
+      </div>
+
+      <div class="card">
+        <h3>Building Coordinates</h3>
+        <p style="color:var(--ink-soft);font-size:12px;margin-bottom:10px;">
+          Walking times between back-to-back classes are computed from real building coordinates.
+          Buildings pulled from your courses appear below. A few are pre-filled; for the rest, click
+          "Find on map", right-click the building's pin in Google Maps to copy its coordinates, and
+          paste them here — every course in that building will use them automatically.
+        </p>
+        <div id="buildingCoordsList"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:22px;">
+      <h3>Background &amp; Appearance</h3>
+      <p style="color:var(--ink-soft);font-size:12px;margin-bottom:12px;">
+        Drop in your own background image (a campus photo, a subtle texture, anything you like). A readable
+        overlay is kept on top automatically, and the image never shows up on printed plans.
+      </p>
+      <button class="btn primary small" onclick="openBgModal()">Customize Background&hellip;</button>
+    </div>
+
+    <div class="card qa-panel">
+      <h3>Data Integrity &amp; Self-Tests</h3>
+      <p style="color:var(--ink-soft);font-size:12px;margin-bottom:10px;">
+        Runs built-in checks against the validator, the conflict detector, the walking-distance estimator, and the
+        GOLD/description parsers using known-answer test cases. Also scans your current courses for anything
+        that looks malformed (bad times, out-of-range ratings, seats open &gt; seats total, etc).
+      </p>
+      <div style="display:flex;gap:8px;">
+        <button class="btn small" onclick="runSelfTests()">Run Self-Tests</button>
+        <button class="btn ghost small" onclick="runDataHealthCheck(true)">Scan Current Data</button>
+      </div>
+      <div id="qaResults" class="qa-results" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- PLANS TAB -->
+  <div class="panel" id="panel-plans">
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
+        <h3 style="margin:0;">Course Selection</h3>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);">
+          Max courses per plan:
+          <select id="courseCountLimitSelect" onchange="onCourseCountLimitChange()">
+            <option value="">Any (use every included course)</option>
+            ${[2,3,4,5,6,7,8].map(n=>`<option value="${n}">${n}</option>`).join('')}
+          </select>
+        </label>
+      </div>
+      <p style="color:var(--ink-soft);font-size:12px;margin-bottom:10px;">
+        Uncheck "In plans" to park a course without deleting it. Check "Required" to force a course into
+        every plan — useful together with a course limit below your total course count, so the optimizer
+        fills the remaining slots from your other included courses.
+      </p>
+      <div id="courseSelectionList"></div>
+    </div>
+    <div class="plans-topbar">
+      <div class="nav-btns">
+        <button class="btn small" onclick="gotoPlan(currentPlanIdx-1)" aria-label="Previous plan">‹ Prev</button>
+        <span id="planCounter">—</span>
+        <button class="btn small" onclick="gotoPlan(currentPlanIdx+1)" aria-label="Next plan">Next ›</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);cursor:pointer;">
+          <input type="checkbox" id="includeInvalidToggle" onchange="onIncludeInvalidChange()"> Include invalid (full/waitlist) plans
+        </label>
+        <button class="btn ghost small" onclick="clearExcluded()">Reset Marked-Full List</button>
+        <button class="btn primary small" onclick="printPlan()" aria-label="Print this plan">Print This Plan</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:6px;">Marked Full / Closed This Session</div>
+      <div class="zone-tag-list" id="excludedChips"></div>
+    </div>
+    <div class="plans-layout">
+      <div class="plan-list" id="planList"></div>
+      <div id="ticketArea"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ================= STATE ================= */
+const COURSE_COLORS = ['#0B2E4A','#C24A2A','#2F7B4F','#8E5A9A','#B08600','#2C7DA0','#7A3E3E','#4E6E58'];
+let state = {
+  courses: [],
+  zones: [],       // legacy — no longer surfaced in the UI, kept so old backups load
+  crossDist: {},   // legacy zone distance matrix — unused going forward
+  sameZoneMin: 3,  // legacy
+  buildingCoords: {}, // code -> {lat,lng}; the coordinate registry that replaced zones
+  weights: { rating: 0.5, travel: 0.3, seats: 0.2 },
+  excluded: new Set(),
+  quarterLabel: '',
+  defaultRatingForUnknown: 3.0,
+  includeInvalidPlans: false,
+  courseCountLimit: null, // null = no limit (use every active course); otherwise a target course count per plan
+  lastImportAt: null, // ISO timestamp of the most recent GOLD import, for the staleness check
+};
+function onQuarterLabelChange(){
+  state.quarterLabel = Validator.sanitizeText(document.getElementById('quarterLabel').value);
+  if(activeTab==='plans') renderTicket();
+}
+let plans = [];
+let currentPlanIdx = 0;
+let activeTab = 'courses';
+let uidCounter = 1;
+let colorCounter = 0;
+function uid(prefix){ return prefix + (uidCounter++); }
+function nextColorIdx(){ return colorCounter++; }
+
+/* Rescan every ID in the current state and push uidCounter past the highest one found.
+   Prevents ID collisions after loading a backup or the sample set, then adding new items. */
+function resyncUidCounter(){
+  let max = 0;
+  const scan = (id)=>{ const m = /(\d+)$/.exec(id||''); if(m) max = Math.max(max, Number(m[1])); };
+  state.courses.forEach(c=>{
+    scan(c.id);
+    c.lectures.forEach(l=>{ scan(l.id); l.sections.forEach(s=>scan(s.id)); });
+  });
+  uidCounter = Math.max(uidCounter, max+1);
+}
+/* Assign a stable colorIdx to any course missing one (new courses, or courses restored
+   from an older backup format) so colors don't shift when other courses are deleted. */
+function resyncColorIdx(){
+  let max = -1;
+  state.courses.forEach(c=>{ if(typeof c.colorIdx === 'number') max = Math.max(max, c.colorIdx); });
+  colorCounter = max+1;
+  state.courses.forEach(c=>{ if(typeof c.colorIdx !== 'number') c.colorIdx = nextColorIdx(); });
+}
+// Backfills active/required on courses from older backups, GOLD imports, or sample data that
+// predate the course-selection feature — everything defaults to active+not-required (old behavior).
+function ensureCourseSelectionDefaults(){
+  state.courses.forEach(c=>{
+    if(typeof c.active !== 'boolean') c.active = true;
+    if(typeof c.required !== 'boolean') c.required = false;
+  });
+}
+
+/* ================= UNDO / REDO / UNSAVED-CHANGES ================= */
+/*
+  History is a simple cursor over full-state snapshots (like browser back/forward), not a diff log —
+  simpler to reason about correctly for a tool this size, at the cost of some memory (bounded to 60 states).
+  NOTE: deliberately does NOT use localStorage/sessionStorage (unsupported in the Claude.ai artifact
+  sandbox) — undo history and the "unsaved changes" flag live in memory only, reset on page reload.
+  Use "Download Backup" to actually persist between sessions.
+*/
+const SCHEMA_VERSION = 3;
+let historyStack = [];
+let historyIndex = -1;
+let isRestoring = false;
+let dirty = false;
+
+function snapshotStateJSON(){
+  return JSON.stringify({
+    courses: state.courses, buildingCoords: state.buildingCoords,
+    weights: state.weights, excluded: Array.from(state.excluded),
+    defaultRatingForUnknown: state.defaultRatingForUnknown, includeInvalidPlans: state.includeInvalidPlans,
+    courseCountLimit: state.courseCountLimit, lastImportAt: state.lastImportAt, quarterLabel: state.quarterLabel
+  });
+}
+function snapshotHistory(){
+  if(isRestoring) return;
+  const snap = snapshotStateJSON();
+  if(historyStack[historyIndex] === snap) return; // no actual change since last snapshot
+  historyStack = historyStack.slice(0, historyIndex+1);
+  historyStack.push(snap);
+  if(historyStack.length>60) historyStack.shift();
+  historyIndex = historyStack.length-1;
+  dirty = true;
+  updateUndoRedoUI();
+  autosaveTick();
+}
+function restoreSnapshot(snap){
+  const data = JSON.parse(snap);
+  isRestoring = true;
+  state.courses = data.courses;
+  state.buildingCoords = data.buildingCoords || {};
+  state.weights = data.weights; state.excluded = new Set(data.excluded);
+  state.defaultRatingForUnknown = data.defaultRatingForUnknown ?? 3.0;
+  state.includeInvalidPlans = data.includeInvalidPlans ?? false;
+  state.courseCountLimit = data.courseCountLimit ?? null;
+  state.lastImportAt = data.lastImportAt ?? null;
+  seedBuildingCoords();
+  resyncUidCounter(); resyncColorIdx(); ensureCourseSelectionDefaults();
+  saveWeightsToInputs();
+  renderBuildingCoords();
+  render();
+  isRestoring = false;
+  updateUndoRedoUI();
+}
+function undo(){
+  if(historyIndex<=0){ toast('Nothing to undo.'); return; }
+  historyIndex--;
+  restoreSnapshot(historyStack[historyIndex]);
+  toast('Undid last change.');
+}
+function redo(){
+  if(historyIndex>=historyStack.length-1){ toast('Nothing to redo.'); return; }
+  historyIndex++;
+  restoreSnapshot(historyStack[historyIndex]);
+  toast('Redid change.');
+}
+function updateUndoRedoUI(){
+  const u = document.getElementById('undoBtn'), r = document.getElementById('redoBtn'), d = document.getElementById('dirtyDot');
+  if(u) u.disabled = historyIndex<=0;
+  if(r) r.disabled = historyIndex>=historyStack.length-1;
+  if(d) d.style.visibility = dirty ? 'visible' : 'hidden';
+}
+document.addEventListener('keydown', (e)=>{
+  const mod = e.ctrlKey || e.metaKey;
+  if(!mod) return;
+  if(e.key==='z' && !e.shiftKey){ e.preventDefault(); undo(); }
+  else if(e.key==='y' || (e.key==='Z' && e.shiftKey)){ e.preventDefault(); redo(); }
+});
+window.addEventListener('beforeunload', (e)=>{
+  if(dirty){ e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ================= VALIDATION ================= */
+const Validator = {
+  RE_TIME: /^([01]\d|2[0-3]):[0-5]\d$/,
+  isValidTime(t){ return typeof t === 'string' && this.RE_TIME.test(t); },
+  timeRangeValid(start, end){
+    if(!this.isValidTime(start) || !this.isValidTime(end)) return false;
+    return toMin(end) > toMin(start);
+  },
+  ratingValid(v){
+    if(v===null || v===undefined || v==='') return true; // "no rating yet" is valid, distinct from an actual 0
+    const n = Number(v);
+    return !isNaN(n) && n>=0 && n<=5;
+  },
+  seatsValid(open, total){
+    const o = Number(open), t = Number(total);
+    if(!Number.isInteger(o) || !Number.isInteger(t)) return false;
+    if(o<0 || t<0) return false;
+    if(o>t) return false;
+    return true;
+  },
+  latLngValid(lat, lng){
+    if(lat===null || lng===null || lat===undefined || lng===undefined) return true; // empty is allowed (optional field)
+    const la = Number(lat), lo = Number(lng);
+    if(isNaN(la) || isNaN(lo)) return false;
+    return la>=-90 && la<=90 && lo>=-180 && lo<=180;
+  },
+  normalizeDays(arr){
+    const order = ['M','T','W','R','F'];
+    const set = new Set((arr||[]).filter(d=>order.includes(d)));
+    return order.filter(d=>set.has(d));
+  },
+  sanitizeText(s){
+    return (s==null ? '' : String(s)).replace(/<[^>]*>/g,'').replace(/[\u0000-\u001F]/g,'').slice(0,300);
+  },
+  normalizeCourseCode(code){
+    let c = (code||'').trim().toUpperCase().replace(/\s+/g,' ');
+    // Insert a space between subject letters and catalog number if missing, e.g. "MATH3A" -> "MATH 3A"
+    const m = c.match(/^([A-Z&]+)\s*(\d.*)$/);
+    if(m) c = m[1] + ' ' + m[2];
+    return c;
+  }
+};
+
+/* Scan all courses/lectures/sections for anything that fails validation.
+   Returns a flat list of human-readable issues; used both by the QA panel and (lightly) by import. */
+function collectDataIssues(){
+  const issues = [];
+  state.courses.forEach(c=>{
+    if(!c.code || !c.code.trim()) issues.push(`Course with blank code (id ${c.id}) — give it a course code.`);
+    c.lectures.forEach((l,li)=>{
+      const tag = `${c.code||'(untitled)'} · Lecture ${li+1}`;
+      if(!Validator.ratingValid(l.rating)) issues.push(`${tag}: rating "${l.rating}" is not between 0 and 5.`);
+      if(!Validator.seatsValid(l.seatsOpen, l.seatsTotal)) issues.push(`${tag}: seats ${l.seatsOpen}/${l.seatsTotal} is invalid (must be whole numbers, open ≤ total, both ≥ 0).`);
+      l.blocks.forEach(b=>{
+        if(b.days && b.days.length && !Validator.timeRangeValid(b.start,b.end)) issues.push(`${tag}: time ${b.start}–${b.end} is invalid (end must be after start).`);
+        if(!Validator.latLngValid(b.lat,b.lng)) issues.push(`${tag}: coordinates (${b.lat}, ${b.lng}) are out of range.`);
+      });
+      l.sections.forEach((s,si)=>{
+        const stag = `${c.code||'(untitled)'} · Lecture ${li+1} · Section ${si+1}`;
+        if(!Validator.seatsValid(s.seatsOpen, s.seatsTotal)) issues.push(`${stag}: seats ${s.seatsOpen}/${s.seatsTotal} is invalid.`);
+        s.blocks.forEach(b=>{
+          if(b.days && b.days.length && !Validator.timeRangeValid(b.start,b.end)) issues.push(`${stag}: time ${b.start}–${b.end} is invalid.`);
+          if(!Validator.latLngValid(b.lat,b.lng)) issues.push(`${stag}: coordinates (${b.lat}, ${b.lng}) are out of range.`);
+        });
+      });
+    });
+  });
+  return issues;
+}
+function runDataHealthCheck(showPanel){
+  const issues = collectDataIssues();
+  document.getElementById('statIssues') && (document.getElementById('statIssues').textContent = issues.length);
+  if(showPanel){
+    const el = document.getElementById('qaResults');
+    el.style.display = 'block';
+    el.innerHTML = issues.length
+      ? `<span class="fail">${issues.length} issue(s) found:</span>\n` + issues.map(i=>'  • '+i).join('\n')
+      : `<span class="pass">No data issues found — every field is in range.</span>`;
+  }
+  return issues;
+}
+
+/* ================= SAMPLE DATA ================= */
+function loadSample(){
+  // Appends a few example courses so you can see how the app works — never touches your existing
+  // courses, zones, or distance settings. Uses real UCSB building codes so they match how the
+  // GOLD parser and building database expect locations to look.
+  const sampleCourses = [
+    {
+      id: uid('c'), code:'CS 130A', title:'Data Structures & Algorithms', colorIdx: nextColorIdx(),
+      units:'', college:'', prerequisite:'', grading:'', description:'',
+      lectures: [
+        { id: uid('l'), instructor:'Prof. A. Reyes', rating:4.6, seatsOpen:4, seatsTotal:120,
+          blocks:[{days:['M','W'],start:'09:00',end:'09:50',location:'GIRV 1004',zone:''}],
+          sections:[
+            { id: uid('s'), ta:'TA J. Park', seatsOpen:2, seatsTotal:25, blocks:[{days:['F'],start:'09:00',end:'09:50',location:'PHELP 1401',zone:''}] },
+            { id: uid('s'), ta:'TA R. Cole', seatsOpen:0, seatsTotal:25, blocks:[{days:['F'],start:'11:00',end:'11:50',location:'HFH 1104',zone:''}] }
+          ]
+        },
+        { id: uid('l'), instructor:'Prof. M. Ibarra', rating:3.1, seatsOpen:22, seatsTotal:100,
+          blocks:[{days:['T','R'],start:'11:00',end:'12:15',location:'BRDA 1610',zone:''}],
+          sections:[
+            { id: uid('s'), ta:'TA S. Diaz', seatsOpen:6, seatsTotal:25, blocks:[{days:['R'],start:'13:00',end:'13:50',location:'BRDA 1640',zone:''}] }
+          ]
+        }
+      ]
+    },
+    {
+      id: uid('c'), code:'WRIT 105EX', title:'Academic Writing', colorIdx: nextColorIdx(),
+      units:'', college:'', prerequisite:'', grading:'', description:'',
+      lectures:[
+        { id: uid('l'), instructor:'Prof. D. Whitfield', rating:4.2, seatsOpen:3, seatsTotal:20,
+          blocks:[{days:['T','R'],start:'09:30',end:'10:45',location:'SH 1432',zone:''}],
+          sections:[]
+        }
+      ]
+    },
+    {
+      id: uid('c'), code:'PSTAT 120A', title:'Probability & Statistics', colorIdx: nextColorIdx(),
+      units:'', college:'', prerequisite:'', grading:'', description:'',
+      lectures:[
+        { id: uid('l'), instructor:'Prof. K. Nguyen', rating:2.9, seatsOpen:14, seatsTotal:150,
+          blocks:[{days:['M','W','F'],start:'10:00',end:'10:50',location:'BUCHN 1930',zone:''}],
+          sections:[
+            { id: uid('s'), ta:'TA L. Huang', seatsOpen:5, seatsTotal:25, blocks:[{days:['M'],start:'13:00',end:'13:50',location:'PHELP 3505',zone:''}] },
+            { id: uid('s'), ta:'TA O. Vance', seatsOpen:1, seatsTotal:25, blocks:[{days:['W'],start:'08:00',end:'08:50',location:'PHELP 3505',zone:''}] }
+          ]
+        },
+        { id: uid('l'), instructor:'Prof. E. Sato', rating:4.4, seatsOpen:8, seatsTotal:150,
+          blocks:[{days:['T','R'],start:'14:00',end:'15:15',location:'BUCHN 1910',zone:''}],
+          sections:[
+            { id: uid('s'), ta:'TA N. Brooks', seatsOpen:9, seatsTotal:25, blocks:[{days:['R'],start:'16:00',end:'16:50',location:'BUCHN 1930',zone:''}] }
+          ]
+        }
+      ]
+    }
+  ];
+  state.courses = state.courses.concat(sampleCourses);
+  resyncUidCounter();
+  resyncColorIdx(); ensureCourseSelectionDefaults();
+  render();
+  runDataHealthCheck(false);
+  toast('Sample courses added alongside your existing courses — remove them anytime with "Remove Course".');
+}
+
+function pairKey(a,b){ return [a,b].sort().join('|'); }
+// Legacy zone distance — retained only so old backups with a crossDist matrix still load without
+// error. New data never sets block.zone, so this is effectively unused going forward.
+function getDist(z1,z2){
+  if(!z1 || !z2) return DEFAULT_WALK_MIN;
+  if(z1===z2) return state.sameZoneMin;
+  const k = pairKey(z1,z2);
+  return (k in state.crossDist) ? state.crossDist[k] : DEFAULT_WALK_MIN;
+}
+const DEFAULT_WALK_MIN = 8; // flat estimate used only when we can't resolve real coordinates for both ends
+function latlngStr(block){
+  return (block.lat!=null && block.lng!=null && block.lat!=='' && block.lng!=='') ? `${block.lat}, ${block.lng}` : '';
+}
+function updateLatLng(path, value, el){
+  const [kind, cid, ...rest] = path;
+  const block = kind==='lb' ? findLecture(cid, rest[0]).blocks[0] : findSection(cid, rest[0], rest[1]).blocks[0];
+  const trimmed = value.trim();
+  if(trimmed===''){ block.lat = null; block.lng = null; return; }
+  const parts = trimmed.split(',').map(s=>s.trim());
+  if(parts.length!==2 || parts[0]===''|| parts[1]==='' || isNaN(parts[0]) || isNaN(parts[1])){
+    rejectField(el, 'Coordinates must be "lat, lng" — e.g. 34.4140, -119.8489.');
+    if(el) el.value = latlngStr(block);
+    return;
+  }
+  const lat = Number(parts[0]), lng = Number(parts[1]);
+  if(!Validator.latLngValid(lat,lng)){
+    rejectField(el, 'Latitude must be -90..90 and longitude -180..180.');
+    if(el) el.value = latlngStr(block);
+    return;
+  }
+  block.lat = lat; block.lng = lng;
+  runDataHealthCheck(false);
+  snapshotHistory();
+}
+// Resolves a block's coordinates: explicit lat/lng on the block wins; otherwise fall back to the
+// building registry via the location code. This is what makes "enter a building's coords once, and
+// every course there uses them" work.
+function resolveCoords(b){
+  if(b.lat!=null && b.lng!=null && !isNaN(b.lat) && !isNaN(b.lng)) return { lat:b.lat, lng:b.lng };
+  const fromRegistry = lookupBuildingCoords(b.location);
+  return fromRegistry || null;
+}
+function hasCoords(b){ return resolveCoords(b) !== null; }
+// Haversine distance in meters between two coordinate pairs
+function haversineMeters(lat1,lng1,lat2,lng2){
+  const R = 6371000;
+  const toRad = d=>d*Math.PI/180;
+  const dLat = toRad(lat2-lat1), dLng = toRad(lng2-lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+// Real walking-minute estimate when both blocks resolve to coordinates; otherwise a flat default.
+function walkMinutes(b1,b2){
+  const c1 = resolveCoords(b1), c2 = resolveCoords(b2);
+  if(c1 && c2){
+    const meters = haversineMeters(c1.lat,c1.lng,c2.lat,c2.lng);
+    // ~1.3 m/s campus walking pace, +2 min buffer for leaving/entering buildings, straight-line so nudged up slightly
+    return Math.round((meters/1.3/60)*1.15 + 2);
+  }
+  return DEFAULT_WALK_MIN;
+}
+function directionsLink(b1,b2){
+  const c1 = resolveCoords(b1), c2 = resolveCoords(b2);
+  if(!c1 || !c2) return null;
+  return `https://www.google.com/maps/dir/?api=1&origin=${c1.lat},${c1.lng}&destination=${c2.lat},${c2.lng}&travelmode=walking`;
+}
+
+/* ================= TABS ================= */
+document.querySelectorAll('.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active', b===btn));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+activeTab).classList.add('active');
+    if(activeTab==='plans'){
+      document.getElementById('includeInvalidToggle').checked = state.includeInvalidPlans;
+      syncCourseCountLimitSelect();
+      renderCourseSelectionPanel();
+      renderPlanList(); renderTicket(); renderExcludedChips();
+    }
+    if(activeTab==='settings'){ renderBuildingCoords(); }
+  });
+});
+
+/* ================= COURSE EDITOR ================= */
+function addCourse(){
+  state.courses.push({ id: uid('c'), code:'NEW 100', title:'', colorIdx: nextColorIdx(), active:true, required:false,
+    units:'', college:'', prerequisite:'', grading:'', description:'', lectures:[] });
+  render();
+}
+function removeCourse(cid){
+  state.courses = state.courses.filter(c=>c.id!==cid);
+  render(); rebuild();
+}
+function toggleCourseFlag(cid, field, value){
+  const c = state.courses.find(c=>c.id===cid);
+  if(!c) return;
+  c[field] = value;
+  if(field==='required' && value) c.active = true; // a required course must also be active
+  render();
+}
+function renderCourseSelectionPanel(){
+  const el = document.getElementById('courseSelectionList');
+  if(!el) return;
+  if(state.courses.length===0){ el.innerHTML = '<span style="color:var(--ink-soft);font-size:12px;">No courses yet — add some in the Courses tab.</span>'; return; }
+  el.innerHTML = state.courses.map(c=>`
+    <div class="detail-row" style="padding:6px 0;">
+      <div class="detail-left">
+        <span class="swatch" style="background:${COURSE_COLORS[c.colorIdx % COURSE_COLORS.length]};"></span>
+        <span class="detail-code">${esc(c.code)}${c.title?' — '+esc(c.title):''}</span>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);cursor:pointer;">
+          <input type="checkbox" ${c.active!==false?'checked':''} onchange="toggleCourseFlag('${c.id}','active',this.checked)"> In plans
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);cursor:pointer;">
+          <input type="checkbox" ${c.required?'checked':''} onchange="toggleCourseFlag('${c.id}','required',this.checked)"> Required
+        </label>
+      </div>
+    </div>`).join('');
+}
+function onCourseCountLimitChange(){
+  const v = document.getElementById('courseCountLimitSelect').value;
+  state.courseCountLimit = v==='' ? null : Number(v);
+  rebuild(true);
+}
+function syncCourseCountLimitSelect(){
+  const sel = document.getElementById('courseCountLimitSelect');
+  if(sel) sel.value = state.courseCountLimit==null ? '' : String(state.courseCountLimit);
+}
+function addLecture(cid){
+  const c = state.courses.find(c=>c.id===cid);
+  c.lectures.push({ id: uid('l'), instructor:'', rating:null, seatsOpen:0, seatsTotal:0,
+    blocks:[{days:[],start:'09:00',end:'09:50',location:'',zone:''}], sections:[] });
+  render();
+}
+function removeLecture(cid,lid){
+  const c = state.courses.find(c=>c.id===cid);
+  c.lectures = c.lectures.filter(l=>l.id!==lid);
+  render(); rebuild();
+}
+function addSection(cid,lid){
+  const l = findLecture(cid,lid);
+  l.sections.push({ id: uid('s'), ta:'', seatsOpen:0, seatsTotal:0, blocks:[{days:[],start:'10:00',end:'10:50',location:'',zone:''}] });
+  render();
+}
+function removeSection(cid,lid,sid){
+  const l = findLecture(cid,lid);
+  l.sections = l.sections.filter(s=>s.id!==sid);
+  render(); rebuild();
+}
+function findLecture(cid,lid){ return state.courses.find(c=>c.id===cid).lectures.find(l=>l.id===lid); }
+function findSection(cid,lid,sid){ return findLecture(cid,lid).sections.find(s=>s.id===sid); }
+
+function rejectField(el, msg){
+  if(el){ el.classList.remove('input-error'); void el.offsetWidth; el.classList.add('input-error'); }
+  toast(msg);
+}
+// Central field update with validation. `el` (optional) is the input/select that triggered the change;
+// on rejection we revert its displayed value back to what's in state instead of committing bad data.
+function updateField(path, value, el){
+  const [kind, cid, ...rest] = path;
+  if(kind==='c'){
+    const c = state.courses.find(c=>c.id===cid);
+    const field = rest[0];
+    c[field] = field==='code' ? Validator.normalizeCourseCode(value) : Validator.sanitizeText(value);
+    markDirty();
+  } else if(kind==='l'){
+    const [lid, field] = rest;
+    const l = findLecture(cid, lid);
+    if(field==='rating'){
+      if(!Validator.ratingValid(value)){ rejectField(el, 'Rating must be a number between 0 and 5 (or blank if unrated).'); if(el) el.value = l.rating==null?'':l.rating; return; }
+      l.rating = (value===''||value==null) ? null : Number(value);
+    } else if(field==='seatsOpen' || field==='seatsTotal'){
+      const open = field==='seatsOpen' ? Number(value) : l.seatsOpen;
+      const total = field==='seatsTotal' ? Number(value) : l.seatsTotal;
+      if(!Validator.seatsValid(open, total)){ rejectField(el, 'Seats must be whole numbers ≥ 0, with open ≤ total.'); if(el) el.value = l[field]; return; }
+      l[field] = Number(value);
+    } else {
+      l[field] = Validator.sanitizeText(value);
+    }
+  } else if(kind==='s'){
+    const [lid, sid, field] = rest;
+    const s = findSection(cid, lid, sid);
+    if(field==='seatsOpen' || field==='seatsTotal'){
+      const open = field==='seatsOpen' ? Number(value) : s.seatsOpen;
+      const total = field==='seatsTotal' ? Number(value) : s.seatsTotal;
+      if(!Validator.seatsValid(open, total)){ rejectField(el, 'Seats must be whole numbers ≥ 0, with open ≤ total.'); if(el) el.value = s[field]; return; }
+      s[field] = Number(value);
+    } else {
+      s[field] = Validator.sanitizeText(value);
+    }
+  } else if(kind==='lb' || kind==='sb'){
+    const block = kind==='lb' ? findLecture(cid, rest[0]).blocks[0] : findSection(cid, rest[0], rest[1]).blocks[0];
+    const field = rest[rest.length-1];
+    if(field==='start' || field==='end'){
+      const start = field==='start' ? value : block.start;
+      const end = field==='end' ? value : block.end;
+      if(!Validator.timeRangeValid(start,end)){ rejectField(el, 'Invalid time — end must be after start (e.g. 09:00–09:50).'); if(el) el.value = block[field]; return; }
+      block[field] = value;
+    } else {
+      block[field] = Validator.sanitizeText(value);
+    }
+  }
+  runDataHealthCheck(false);
+  snapshotHistory();
+}
+function toggleDay(path, day, btn){
+  const [kind, cid, ...rest] = path;
+  const block = kind==='lb' ? findLecture(cid, rest[0]).blocks[0] : findSection(cid, rest[0], rest[1]).blocks[0];
+  const days = block.days;
+  const i = days.indexOf(day);
+  if(i>-1) days.splice(i,1); else days.push(day);
+  block.days = Validator.normalizeDays(days); // dedupe + canonical M T W R F order
+  btn.classList.toggle('on');
+  btn.setAttribute('aria-pressed', btn.classList.contains('on'));
+  runDataHealthCheck(false);
+  snapshotHistory();
+}
+
+function dayButtons(path, days){
+  const D=['M','T','W','R','F'];
+  const NAMES={M:'Monday',T:'Tuesday',W:'Wednesday',R:'Thursday',F:'Friday'};
+  return `<div class="days-picker">${D.map(d=>`<button type="button" class="${days.includes(d)?'on':''}" aria-pressed="${days.includes(d)}" aria-label="${NAMES[d]}" onclick='toggleDay(${JSON.stringify(path)},"${d}",this)'>${d}</button>`).join('')}</div>`;
+}
+
+function render(){
+  resyncColorIdx(); ensureCourseSelectionDefaults();
+  populateDescTargetOptions();
+  document.getElementById('statCourses').textContent = state.courses.length;
+  const list = document.getElementById('courseList');
+  list.innerHTML = state.courses.map((c)=>{
+    const color = COURSE_COLORS[c.colorIdx % COURSE_COLORS.length];
+    const isCollapsed = collapsedCourses.has(c.id);
+    return `
+    <div class="course-card${isCollapsed?' collapsed':''}" data-cid="${c.id}" style="--course-color:${color};${c.active===false?'opacity:.55;':''}">
+      <div class="course-head">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="course-toggle" type="button" aria-label="Collapse or expand this course" aria-expanded="${!isCollapsed}" onclick="toggleCourseCollapse('${c.id}', this)">&#9662;</button>
+          <input class="code" value="${esc(c.code)}" onchange="updateField(['c','${c.id}','code'], this.value, this)">
+          <input placeholder="Course title" style="border:none;background:transparent;font-size:12px;color:var(--ink-soft);width:220px;" value="${esc(c.title||'')}" onchange="updateField(['c','${c.id}','title'], this.value, this)">
+        </div>
+        <button class="btn danger small" onclick="removeCourse('${c.id}')">Remove Course</button>
+      </div>
+      <div class="course-collapsible">
+      <div class="course-meta" style="display:flex;gap:16px;align-items:center;padding-top:8px;">
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <input type="checkbox" ${c.active!==false?'checked':''} onchange="toggleCourseFlag('${c.id}','active',this.checked)"> Include in plans
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <input type="checkbox" ${c.required?'checked':''} onchange="toggleCourseFlag('${c.id}','required',this.checked)"> Required (always include)
+        </label>
+      </div>
+      ${(c.units||c.college||c.prerequisite) ? `<div class="course-meta">${c.units?`Units: ${esc(c.units)}`:''}${c.college?` · ${esc(c.college)}`:''}${c.prerequisite?` · Prereq: ${esc(c.prerequisite)}`:''}${c.grading?` · Grading: ${esc(c.grading)}`:''}</div>` : ''}
+      ${c.importedAt ? `<div class="course-meta" style="color:${(hoursSince(c.importedAt)>STALE_AFTER_HOURS)?'var(--coral)':'var(--ink-soft)'};">Imported ${humanizeAge(c.importedAt)}</div>` : ''}
+      <div class="course-body">
+        ${c.lectures.map(l=>lectureHTML(c.id,l)).join('')}
+        <button class="btn small" onclick="addLecture('${c.id}')">+ Add Lecture Option</button>
+      </div>
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty-note">No courses yet. Click "Add Course" or "Load Sample Data" to get started.</div>`;
+  document.getElementById('courseListTools').style.display = state.courses.length ? 'flex' : 'none';
+  runDataHealthCheck(false);
+  renderCourseSelectionPanel();
+  renderFreshnessBanner();
+  renderBuildingCoords();
+  rebuild();
+  snapshotHistory();
+}
+
+function lectureHTML(cid, l){
+  return `
+  <div class="lecture-block">
+    <div class="lecture-block-head">
+      <span>LECTURE</span>
+      <button class="btn small danger" onclick="removeLecture('${cid}','${l.id}')">Remove</button>
+    </div>
+    <div class="field-row">
+      <div class="f"><label>Instructor</label><input value="${esc(l.instructor)}" style="width:150px;" onchange="updateField(['l','${cid}','${l.id}','instructor'], this.value, this)"></div>
+      <div class="f"><label>Rating (0–5, blank = unrated)</label><input type="number" min="0" max="5" step="0.1" placeholder="—" value="${l.rating==null?'':l.rating}" style="width:60px;" onchange="updateField(['l','${cid}','${l.id}','rating'], this.value, this)"></div>
+      ${l.instructor?`<div class="f"><label>&nbsp;</label><a class="btn ghost small" href="${rmpSearchLink(l.instructor)}" target="_blank" rel="noopener">Look up on RMP</a></div>`:''}
+      <div class="f"><label>Seats Open</label><input type="number" value="${l.seatsOpen}" style="width:60px;" onchange="updateField(['l','${cid}','${l.id}','seatsOpen'], this.value, this)"></div>
+      <div class="f"><label>Seats Total</label><input type="number" value="${l.seatsTotal}" style="width:60px;" onchange="updateField(['l','${cid}','${l.id}','seatsTotal'], this.value, this)"></div>
+    </div>
+    <div class="field-row">
+      <div class="f"><label>Days</label>${dayButtons(['lb',cid,l.id], l.blocks[0].days)}</div>
+      <div class="f"><label>Start</label><input type="time" value="${l.blocks[0].start}" onchange="updateField(['lb','${cid}','${l.id}','start'], this.value, this)"></div>
+      <div class="f"><label>End</label><input type="time" value="${l.blocks[0].end}" onchange="updateField(['lb','${cid}','${l.id}','end'], this.value, this)"></div>
+      <div class="f"><label>Location</label><input value="${esc(l.blocks[0].location)}" style="width:150px;" onchange="updateField(['lb','${cid}','${l.id}','location'], this.value, this)"></div>
+      <div class="f"><label>Lat, Lng (override)</label><input placeholder="auto from building" value="${esc(latlngStr(l.blocks[0]))}" style="width:150px;" onchange="updateLatLng(['lb','${cid}','${l.id}'], this.value, this)"></div>
+    </div>
+    ${l.sections.map(s=>sectionHTML(cid,l.id,s)).join('')}
+    <button class="btn small" style="margin-left:16px;margin-top:4px;" onclick="addSection('${cid}','${l.id}')">+ Add Section</button>
+  </div>`;
+}
+function sectionHTML(cid, lid, s){
+  return `
+  <div class="section-block">
+    <div class="lecture-block-head">
+      <span>SECTION</span>
+      <button class="btn small danger" onclick="removeSection('${cid}','${lid}','${s.id}')">Remove</button>
+    </div>
+    <div class="field-row">
+      <div class="f"><label>TA</label><input value="${esc(s.ta)}" style="width:130px;" onchange="updateField(['s','${cid}','${lid}','${s.id}','ta'], this.value, this)"></div>
+      <div class="f"><label>Seats Open</label><input type="number" value="${s.seatsOpen}" style="width:60px;" onchange="updateField(['s','${cid}','${lid}','${s.id}','seatsOpen'], this.value, this)"></div>
+      <div class="f"><label>Seats Total</label><input type="number" value="${s.seatsTotal}" style="width:60px;" onchange="updateField(['s','${cid}','${lid}','${s.id}','seatsTotal'], this.value, this)"></div>
+    </div>
+    <div class="field-row">
+      <div class="f"><label>Days</label>${dayButtons(['sb',cid,lid,s.id], s.blocks[0].days)}</div>
+      <div class="f"><label>Start</label><input type="time" value="${s.blocks[0].start}" onchange="updateField(['sb','${cid}','${lid}','${s.id}','start'], this.value, this)"></div>
+      <div class="f"><label>End</label><input type="time" value="${s.blocks[0].end}" onchange="updateField(['sb','${cid}','${lid}','${s.id}','end'], this.value, this)"></div>
+      <div class="f"><label>Location</label><input value="${esc(s.blocks[0].location)}" style="width:150px;" onchange="updateField(['sb','${cid}','${lid}','${s.id}','location'], this.value, this)"></div>
+      <div class="f"><label>Lat, Lng (override)</label><input placeholder="auto from building" value="${esc(latlngStr(s.blocks[0]))}" style="width:150px;" onchange="updateLatLng(['sb','${cid}','${lid}','${s.id}'], this.value, this)"></div>
+    </div>
+  </div>`;
+}
+function esc(s){ return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ================= BUILDING COORDINATES / SETTINGS ================= */
+function renderBuildingCoords(){
+  const el = document.getElementById('buildingCoordsList');
+  if(!el) return;
+  const codes = buildingCodesInUse();
+  if(codes.length===0){
+    el.innerHTML = '<span style="color:var(--ink-soft);font-size:12px;">No buildings yet — import or add courses with locations, then their buildings show up here.</span>';
+    return;
+  }
+  el.innerHTML = codes.map(code=>{
+    const coords = (state.buildingCoords && state.buildingCoords[code]) || BUILDING_COORDS[code] || null;
+    const name = (BUILDING_DB[code] && BUILDING_DB[code].name) || code;
+    const val = coords ? `${coords.lat}, ${coords.lng}` : '';
+    const verified = coords ? '<span class="badge seats-ok" style="margin-left:6px;">has coords</span>' : '<span class="badge seats-low" style="margin-left:6px;">no coords</span>';
+    return `
+    <div class="detail-row" style="padding:8px 0;">
+      <div class="detail-left" style="flex-direction:column;align-items:flex-start;gap:2px;">
+        <div><span class="detail-code">${esc(code)}</span> ${verified}</div>
+        <div class="detail-meta">${esc(name)}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input placeholder="34.4140, -119.8489" value="${esc(val)}" style="width:170px;border:1px solid var(--line);padding:5px 7px;border-radius:2px;font-size:12px;font-family:'IBM Plex Mono',monospace;" onchange="setBuildingCoords('${esc(code)}', this.value, this)">
+        <a class="btn ghost small" href="${buildingMapLink(code)}" target="_blank" rel="noopener">Find on map</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+function setBuildingCoords(code, value, el){
+  if(!state.buildingCoords) state.buildingCoords = {};
+  const trimmed = value.trim();
+  if(trimmed===''){ delete state.buildingCoords[code]; rebuild(false); renderBuildingCoords(); return; }
+  const parts = trimmed.split(',').map(s=>s.trim());
+  if(parts.length!==2 || isNaN(parts[0]) || isNaN(parts[1])){
+    rejectField(el, 'Coordinates must be "lat, lng" — e.g. 34.4140, -119.8489.');
+    return;
+  }
+  const lat = Number(parts[0]), lng = Number(parts[1]);
+  if(!Validator.latLngValid(lat,lng)){ rejectField(el, 'Latitude must be -90..90 and longitude -180..180.'); return; }
+  state.buildingCoords[code] = { lat, lng };
+  rebuild(false);
+  renderBuildingCoords();
+  snapshotHistory();
+  toast(`Saved coordinates for ${code} — every class there now uses them.`);
+}
+
+function saveWeightsToInputs(){
+  document.getElementById('wRating').value = state.weights.rating;
+  document.getElementById('wTravel').value = state.weights.travel;
+  document.getElementById('wSeats').value = state.weights.seats;
+  document.getElementById('wDefaultRating').value = state.defaultRatingForUnknown;
+  document.getElementById('wDefaultRatingVal').textContent = state.defaultRatingForUnknown.toFixed(1);
+  onWeightChange(false);
+}
+function onDefaultRatingChange(){
+  state.defaultRatingForUnknown = Number(document.getElementById('wDefaultRating').value);
+  document.getElementById('wDefaultRatingVal').textContent = state.defaultRatingForUnknown.toFixed(1);
+  rebuild(false);
+}
+function onWeightChange(doRebuild=true){
+  state.weights.rating = Number(document.getElementById('wRating').value);
+  state.weights.travel = Number(document.getElementById('wTravel').value);
+  state.weights.seats = Number(document.getElementById('wSeats').value);
+  document.getElementById('wRatingVal').textContent = state.weights.rating.toFixed(2);
+  document.getElementById('wTravelVal').textContent = state.weights.travel.toFixed(2);
+  document.getElementById('wSeatsVal').textContent = state.weights.seats.toFixed(2);
+}
+
+/* ================= CORE SCHEDULING LOGIC ================= */
+function toMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+function overlap(a,b){
+  if(!a.days.some(d=>b.days.includes(d))) return false;
+  return toMin(a.start) < toMin(b.end) && toMin(b.start) < toMin(a.end);
+}
+function allBlocks(opt){
+  let blocks = opt.lec.blocks.map(b=>({...b, kind:'Lecture'}));
+  if(opt.sec) blocks = blocks.concat(opt.sec.blocks.map(b=>({...b, kind:'Section'})));
+  return blocks;
+}
+function courseOptionsFor(course, includeExcluded){
+  let opts=[];
+  course.lectures.forEach(lec=>{
+    const lecFull = state.excluded.has(lec.id);
+    if(lecFull && !includeExcluded) return;
+    if(lec.sections.length===0){
+      opts.push({course, lec, sec:null, invalid: lecFull});
+    } else {
+      lec.sections.forEach(sec=>{
+        const secFull = state.excluded.has(sec.id);
+        if(secFull && !includeExcluded) return;
+        opts.push({course, lec, sec, invalid: lecFull||secFull});
+      });
+    }
+  });
+  return opts;
+}
+// Core conflict search over a fixed set of courses (unchanged from before this feature) — now
+// factored out so it can be run once per course-count-limit subset instead of just once globally.
+function buildCombosForCourseSet(courseSet, includeExcluded){
+  if(courseSet.length===0) return { combos: [], truncated:false };
+  const perCourseRaw = courseSet.map(c=>courseOptionsFor(c, includeExcluded));
+  if(perCourseRaw.some(o=>o.length===0)) return { combos: [], truncated:false };
+  const order = perCourseRaw.map((opts,i)=>i).sort((a,b)=>perCourseRaw[a].length-perCourseRaw[b].length);
+  const perCourse = order.map(i=>perCourseRaw[i]);
+  let results=[];
+  const CAP = 4000;
+  const NODE_BUDGET = 300000; // hard visit cap so a worst-case input (many courses × many options) can't hang the tab
+  let nodesVisited = 0;
+  let truncated = false;
+  function rec(idx, chosen, blocksSoFar){
+    if(results.length>=CAP) return;
+    nodesVisited++;
+    if(nodesVisited>NODE_BUDGET){ truncated = true; return; }
+    if(idx===perCourse.length){ results.push([...chosen]); return; }
+    for(const opt of perCourse[idx]){
+      const newBlocks = allBlocks(opt);
+      let ok=true;
+      outer: for(const nb of newBlocks){ for(const eb of blocksSoFar){ if(overlap(nb,eb)){ok=false;break outer;} } }
+      if(!ok) continue;
+      chosen.push(opt);
+      rec(idx+1, chosen, blocksSoFar.concat(newBlocks));
+      chosen.pop();
+      if(results.length>=CAP || truncated) return;
+    }
+  }
+  rec(0,[],[]);
+  return { combos: results, truncated };
+}
+// Enumerates up to `cap` k-element combinations of arr. Returns {list, truncated} — truncated
+// means there were more combinations than the cap, so results are a (deterministic) partial set.
+function kCombinations(arr, k, cap){
+  const result = [];
+  let truncated = false;
+  if(k<0 || k>arr.length) return { list:[], truncated:false };
+  function rec(start, combo){
+    if(truncated) return;
+    if(result.length>=cap){ truncated = true; return; }
+    if(combo.length===k){ result.push(combo.slice()); return; }
+    for(let i=start;i<arr.length;i++){
+      combo.push(arr[i]);
+      rec(i+1, combo);
+      combo.pop();
+      if(truncated) return;
+    }
+  }
+  rec(0, []);
+  return { list: result, truncated };
+}
+/*
+  Course selection now happens in three layers:
+  - "active" courses are the pool the optimizer considers at all (inactive ones are ignored, same
+    as if they didn't exist — lets you park a course without deleting it)
+  - "required" active courses must appear in every plan
+  - state.courseCountLimit (null = no limit) caps how many total courses appear in a plan. When set
+    and below the active count, the optimizer tries every combination of the non-required active
+    courses that fills the remaining slots, alongside the required ones — e.g. limit=4 with 2
+    required courses tries every pair from your other active courses to fill the last 2 slots.
+*/
+function buildCombos(includeExcluded){
+  const active = state.courses.filter(c=>c.active!==false);
+  if(active.length===0) return { combos: [], truncated:false, error:null };
+  const required = active.filter(c=>c.required);
+  const optional = active.filter(c=>!c.required);
+  const limit = state.courseCountLimit;
+
+  if(limit==null || limit>=active.length){
+    const r = buildCombosForCourseSet(active, includeExcluded);
+    return { combos:r.combos, truncated:r.truncated, error:null };
+  }
+  const optionalSlots = limit - required.length;
+  if(optionalSlots<0) return { combos: [], truncated:false, error:'required-exceeds-limit' };
+  if(optionalSlots===0){
+    const r = buildCombosForCourseSet(required, includeExcluded);
+    return { combos:r.combos, truncated:r.truncated, error:null };
+  }
+  const SUBSET_CAP = 500; // cap on how many course-subsets we try, separate from the per-subset schedule-search cap
+  const { list: subsets, truncated: subsetsTruncated } = kCombinations(optional, optionalSlots, SUBSET_CAP);
+  let allCombos = [];
+  let anyTruncated = subsetsTruncated;
+  const GLOBAL_CAP = 4000;
+  for(const subset of subsets){
+    if(allCombos.length>=GLOBAL_CAP){ anyTruncated = true; break; }
+    const r = buildCombosForCourseSet(required.concat(subset), includeExcluded);
+    if(r.truncated) anyTruncated = true;
+    allCombos = allCombos.concat(r.combos);
+  }
+  return { combos: allCombos, truncated: anyTruncated, error:null };
+}
+// Sums parsed unit values across the distinct courses in a plan. Courses without a units value
+// (e.g. never had a description block attached) are counted separately so the total is never
+// silently wrong — the UI shows "at least X units (Y course(s) missing unit data)" in that case.
+function sumUnits(combo){
+  let total = 0, missing = 0;
+  const seen = new Set();
+  combo.forEach(o=>{
+    if(seen.has(o.course.id)) return;
+    seen.add(o.course.id);
+    const n = parseFloat(o.course.units);
+    if(!isNaN(n)) total += n; else missing++;
+  });
+  return { total, missing };
+}
+function scoreCombo(combo){
+  const ratings = combo.map(o=> o.lec.rating==null ? state.defaultRatingForUnknown : o.lec.rating);
+  const avgRating = ratings.reduce((a,b)=>a+b,0)/ratings.length;
+  const seatRatios = combo.map(o=>{
+    let r = o.lec.seatsTotal>0 ? o.lec.seatsOpen/o.lec.seatsTotal : 0.5;
+    if(o.sec) r = Math.min(r, o.sec.seatsTotal>0 ? o.sec.seatsOpen/o.sec.seatsTotal : 0.5);
+    return r;
+  });
+  const avgSeat = seatRatios.reduce((a,b)=>a+b,0)/seatRatios.length;
+  const allB = combo.flatMap(allBlocks);
+  const days = ['M','T','W','R','F'];
+  let walkPenalty=0, tightCount=0;
+  days.forEach(d=>{
+    const list = allB.filter(b=>b.days.includes(d)).sort((a,b)=>toMin(a.start)-toMin(b.start));
+    for(let i=0;i<list.length-1;i++){
+      const gap = toMin(list[i+1].start)-toMin(list[i].end);
+      if(gap<=25){
+        const w = walkMinutes(list[i], list[i+1]);
+        walkPenalty += w;
+        if(w>gap) tightCount++;
+      }
+    }
+  });
+  const normWalk = Math.min(1, walkPenalty/50);
+  const normTight = Math.min(1, tightCount/3);
+  const w = state.weights;
+  const score = w.rating*(avgRating/5) - w.travel*(normWalk*0.55+normTight*0.45) + w.seats*avgSeat;
+  return { score, avgRating, avgSeat, walkPenalty, tightCount };
+}
+function rebuild(showToast){
+  const { combos, truncated, error } = buildCombos(false);
+  if(error==='required-exceeds-limit'){
+    plans = [];
+    currentPlanIdx = 0;
+    document.getElementById('statPlans').textContent = 0;
+    document.getElementById('statExcluded').textContent = state.excluded.size;
+    if(activeTab==='plans'){ renderPlanList(); renderTicket(); renderExcludedChips(); }
+    if(showToast) toast('You have more "required" courses than your course-count limit allows — raise the limit or un-require a course.');
+    snapshotHistory();
+    return;
+  }
+  const validPlans = combos.map(combo=>({ combo, invalid:false, units: sumUnits(combo), ...scoreCombo(combo) }))
+                .sort((a,b)=>b.score-a.score)
+                .slice(0,30);
+  let invalidPlans = [];
+  if(state.includeInvalidPlans){
+    const all = buildCombos(true);
+    invalidPlans = all.combos
+      .filter(combo=>combo.some(o=>o.invalid))
+      .map(combo=>({ combo, invalid:true, units: sumUnits(combo), ...scoreCombo(combo) }))
+      .sort((a,b)=>b.score-a.score)
+      .slice(0,10);
+  }
+  plans = validPlans.concat(invalidPlans);
+  currentPlanIdx = 0;
+  document.getElementById('statPlans').textContent = validPlans.length;
+  document.getElementById('statExcluded').textContent = state.excluded.size;
+  if(activeTab==='plans'){ renderPlanList(); renderTicket(); renderExcludedChips(); }
+  if(truncated){
+    toast('Search space too large to fully explore — showing the best plans found before the safety limit. Try marking more sections full or removing a course.');
+  } else if(showToast){
+    toast(validPlans.length ? `${validPlans.length} conflict-free plan(s) found${invalidPlans.length?`, plus ${invalidPlans.length} invalid (full/waitlist) plan(s)`:''}.` : `No valid combination — some course has zero usable options.`);
+  }
+  snapshotHistory();
+}
+
+/* ================= PLANS UI ================= */
+function onIncludeInvalidChange(){
+  state.includeInvalidPlans = document.getElementById('includeInvalidToggle').checked;
+  rebuild(true);
+}
+function gotoPlan(i){
+  if(plans.length===0) return;
+  currentPlanIdx = (i+plans.length)%plans.length;
+  renderPlanList(); renderTicket();
+}
+function renderPlanList(){
+  const el = document.getElementById('planList');
+  document.getElementById('planCounter').textContent = plans.length ? `Plan ${currentPlanIdx+1} of ${plans.length}` : 'No plans';
+  if(plans.length===0){ el.innerHTML=''; return; }
+  el.innerHTML = plans.map((p,i)=>`
+    <div class="plan-item ${i===currentPlanIdx?'active':''}" style="${p.invalid?'border-color:var(--coral);':''}" onclick="gotoPlan(${i})">
+      <div class="pn">Plan ${String.fromCharCode(65+(i%26))}${i>=26?(Math.floor(i/26)+1):''} <span style="float:right;">#${i+1}</span></div>
+      <div class="ps">${p.invalid?'<span style="color:var(--coral);">⚠ INVALID</span> · ':''}★ ${p.avgRating.toFixed(1)} · seats ${(p.avgSeat*100).toFixed(0)}% · ${p.tightCount?p.tightCount+' tight walk':'clear walks'}</div>
+    </div>`).join('');
+}
+function planLetter(i){ return `Plan ${String.fromCharCode(65+(i%26))}${i>=26?(Math.floor(i/26)+1):''}`; }
+
+function renderTicket(){
+  const area = document.getElementById('ticketArea');
+  if(state.courses.length===0){
+    area.innerHTML = `<div class="empty-note">Add courses first, then come back here to see ranked schedule options.</div>`;
+    return;
+  }
+  if(plans.length===0){
+    area.innerHTML = `<div class="empty-note">No conflict-free combination exists with the current courses and marked-full list.<br>Try removing a marked-full item or adjusting lecture/section times.</div>`;
+    return;
+  }
+  const p = plans[currentPlanIdx];
+  const colorOf = (opt)=> COURSE_COLORS[(opt.course.colorIdx||0) % COURSE_COLORS.length];
+
+  // Grid
+  const startHour=8, endHour=21, rowH=40;
+  const dayCols = {M:0,T:1,W:2,R:3,F:4};
+  const dayNames = {M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
+  let blocksHTML = {M:'',T:'',W:'',R:'',F:''};
+  p.combo.forEach(opt=>{
+    const color = colorOf(opt);
+    allBlocks(opt).forEach(b=>{
+      const top = (toMin(b.start)-startHour*60)/60*rowH;
+      const h = Math.max(16,(toMin(b.end)-toMin(b.start))/60*rowH);
+      b.days.forEach(d=>{
+        if(!(d in blocksHTML)) return;
+        blocksHTML[d] += `<div class="cal-block ${b.kind==='Section'?'section':''}" style="top:${top}px;height:${h}px;background:${color};" title="${esc(opt.course.code)} ${b.kind}">
+          <b>${esc(opt.course.code)}</b><span class="loc">${esc(b.location||'')}</span>
+        </div>`;
+      });
+    });
+  });
+  const timeLabels = [];
+  for(let h=startHour; h<=endHour; h++){
+    timeLabels.push(`<span class="cal-time-label" style="top:${(h-startHour)*rowH}px;">${h>12?h-12:h}${h>=12?'p':'a'}</span>`);
+  }
+  const gridHeight = (endHour-startHour)*rowH;
+  const gridHTML = `
+    <div class="cal-grid">
+      <div class="cal-head"></div>
+      ${Object.values(dayNames).map(n=>`<div class="cal-head">${n}</div>`).join('')}
+      <div class="cal-times" style="height:${gridHeight}px;">${timeLabels.join('')}</div>
+      ${Object.keys(dayNames).map(d=>`<div class="cal-col" style="height:${gridHeight}px;">${blocksHTML[d]}</div>`).join('')}
+    </div>`;
+
+  // Detail rows
+  const rows = p.combo.map(opt=>{
+    const color = colorOf(opt);
+    const lb = opt.lec.blocks[0];
+    const seatLow = opt.lec.seatsTotal>0 && (opt.lec.seatsOpen/opt.lec.seatsTotal) < 0.15;
+    let html = `
+    <div class="detail-row">
+      <div class="detail-left">
+        <span class="swatch" style="background:${color};"></span>
+        <div>
+          <div class="detail-code">${esc(opt.course.code)} · Lecture</div>
+          <div class="detail-meta">${lb.days.join('')} ${lb.start}–${lb.end} · ${esc(lb.location||'TBA')} · ${esc(opt.lec.instructor||'TBA')}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span class="badge ${opt.lec.rating==null?'':'rating'}" style="${opt.lec.rating==null?'background:var(--paper-dim);color:var(--ink-soft);':''}">${opt.lec.rating==null?'No rating':'★ '+opt.lec.rating.toFixed(1)}</span>
+        ${opt.lec.instructor?`<a class="btn ghost small" href="${rmpSearchLink(opt.lec.instructor)}" target="_blank" rel="noopener" title="Look up ${esc(opt.lec.instructor)} on RateMyProfessors">RMP</a>`:''}
+        <span class="badge ${seatLow?'seats-low':'seats-ok'}">${opt.lec.seatsOpen}/${opt.lec.seatsTotal} seats</span>
+        <button class="btn small danger" onclick="markFull('${opt.lec.id}')">Mark Full</button>
+      </div>
+    </div>`;
+    if(opt.sec){
+      const sb = opt.sec.blocks[0];
+      const secLow = opt.sec.seatsTotal>0 && (opt.sec.seatsOpen/opt.sec.seatsTotal) < 0.15;
+      html += `
+      <div class="detail-row">
+        <div class="detail-left">
+          <span class="swatch" style="background:${color};opacity:.6;"></span>
+          <div>
+            <div class="detail-code">${esc(opt.course.code)} · Section${opt.sec.enroll?` <span class="mono" style="color:var(--ink-soft);font-weight:400;">#${esc(opt.sec.enroll)}</span>`:''}</div>
+            <div class="detail-meta">${sb.days.join('')} ${sb.start}–${sb.end} · ${esc(sb.location||'TBA')} · ${esc(opt.sec.ta||'TBA')}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge ${secLow?'seats-low':'seats-ok'}">${opt.sec.seatsOpen}/${opt.sec.seatsTotal} seats</span>
+          <button class="btn small danger" onclick="markFull('${opt.sec.id}')">Mark Full</button>
+        </div>
+      </div>`;
+    }
+    return html;
+  }).join('');
+
+  area.innerHTML = `
+    <div class="ticket">
+      <div class="ticket-head">
+        <div>
+          <div class="plan-title">${planLetter(currentPlanIdx)}</div>
+          <div class="plan-sub">RANK #${currentPlanIdx+1} OF ${plans.length} · SCORE ${(p.score*100).toFixed(0)}</div>
+        </div>
+        <div class="ticket-actions">
+          <button class="btn ghost small" onclick="gotoPlan(currentPlanIdx-1)" aria-label="Previous plan">‹</button>
+          <button class="btn ghost small" onclick="gotoPlan(currentPlanIdx+1)" aria-label="Next plan">›</button>
+        </div>
+      </div>
+      ${p.invalid ? `<div style="background:#FDEDE7;color:var(--coral);padding:10px 20px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line);">
+        ⚠ INVALID PLAN — uses at least one section marked full/closed: ${esc(p.combo.filter(o=>o.invalid).map(o=>`${o.course.code} ${o.sec?'Section'+(o.sec.enroll?' #'+o.sec.enroll:''):'Lecture'}`).join(', '))}. This is shown because "Include invalid plans" is on — you would need to get into a waitlist or hope for a seat opening to actually enroll in this combination.
+      </div>` : ''}
+      <div class="grid-wrap">${gridHTML}</div>
+      <div class="perforation"></div>
+      <div class="detail-list">${rows}</div>
+      <div class="perforation"></div>
+      <div class="detail-list">${walkCheckHTML(p.combo)}</div>
+      <div class="score-strip">
+        <span>Avg rating <b>★${p.avgRating.toFixed(2)}</b></span>
+        <span>Seat safety <b>${(p.avgSeat*100).toFixed(0)}%</b></span>
+        <span>Tight walks <b>${p.tightCount}</b></span>
+        <span>Total walk load <b>${p.walkPenalty} min</b></span>
+        <span>Units <b>${p.units.total}${p.units.missing?` (+${p.units.missing} unknown)`:''}</b></span>
+        <span>Courses <b>${p.combo.length}</b></span>
+      </div>
+      <div class="print-only" style="padding:6px 20px;font-size:10px;color:var(--ink-soft);border-top:1px solid var(--paper-dim);">
+        ${state.quarterLabel?esc(state.quarterLabel)+' · ':''}${planLetter(currentPlanIdx)} · Printed ${new Date().toLocaleString()}
+      </div>
+    </div>`;
+}
+
+function walkCheckHTML(combo){
+  const dayNames = {M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
+  const allB = combo.flatMap(opt=>allBlocks(opt).map(b=>({...b, code:opt.course.code})));
+  let out = `<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:8px;">Back-to-Back Walk Check</div>`;
+  let any = false;
+  ['M','T','W','R','F'].forEach(d=>{
+    const list = allB.filter(b=>b.days.includes(d)).sort((a,b)=>toMin(a.start)-toMin(b.start));
+    for(let i=0;i<list.length-1;i++){
+      const gap = toMin(list[i+1].start)-toMin(list[i].end);
+      if(gap>25) continue;
+      any = true;
+      const mins = walkMinutes(list[i], list[i+1]);
+      const tight = mins > gap;
+      const link = directionsLink(list[i], list[i+1]);
+      const usingReal = hasCoords(list[i]) && hasCoords(list[i+1]);
+      out += `<div class="detail-row">
+        <div class="detail-left">
+          <div>
+            <div class="detail-code">${dayNames[d]}: ${esc(list[i].code)} → ${esc(list[i+1].code)}</div>
+            <div class="detail-meta">${esc(list[i].location||'TBA')} → ${esc(list[i+1].location||'TBA')} · ${gap} min between classes${usingReal?'':' · rough estimate (add building coordinates for exact time)'}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge ${tight?'tight':'seats-ok'}">${tight?'⚠ tight — ':''}~${mins} min walk</span>
+          ${link?`<a class="btn ghost small" href="${link}" target="_blank" rel="noopener">Get Directions</a>`:''}
+        </div>
+      </div>`;
+    }
+  });
+  if(!any) out += `<div style="color:var(--ink-soft);font-size:12px;">No back-to-back transitions under 25 minutes — you've got breathing room between every class.</div>`;
+  return out;
+}
+function markFull(id){
+  state.excluded.add(id);
+  rebuild(false);
+  document.getElementById('statExcluded').textContent = state.excluded.size;
+  toast(`Marked full. Showing best remaining plan (${plans.length} left).`);
+  renderPlanList(); renderTicket();
+}
+function unmarkFull(id){
+  state.excluded.delete(id);
+  rebuild(true);
+  renderPlanList(); renderTicket();
+}
+function findItemLabel(id){
+  for(const c of state.courses){
+    for(const l of c.lectures){
+      if(l.id===id) return `${c.code} · Lecture (${l.instructor||'TBA'})`;
+      const s = l.sections.find(s=>s.id===id);
+      if(s) return `${c.code} · Section${s.enroll?' #'+s.enroll:''} (${s.ta||'TBA'})`;
+    }
+  }
+  return '(removed item)';
+}
+function renderExcludedChips(){
+  const el = document.getElementById('excludedChips');
+  if(!el) return;
+  el.innerHTML = state.excluded.size===0
+    ? '<span style="color:var(--ink-soft);font-size:12px;">Nothing marked full yet — click "Mark Full" on a lecture/section in the plan below when it closes out, and the deck reshuffles to your next-best option.</span>'
+    : Array.from(state.excluded).map(id=>`<span class="zone-tag">${esc(findItemLabel(id))} <button onclick="unmarkFull('${id}')" title="Un-mark">✕</button></span>`).join('');
+}
+function clearExcluded(){
+  state.excluded = new Set();
+  rebuild(true);
+  renderExcludedChips();
+}
+
+/* ================= BUILDING DATABASE ================= */
+/*
+  Code -> full name mapping sourced from UCSB Office of the Registrar's published location-code table
+  (sites.cs.ucsb.edu/~pconrad/cs56/11W/lectures/01.03/locationcodes.htm, last modified Sept 2010 —
+  a few newer buildings may be missing). Used to expand GOLD's compressed location codes (e.g. "GIRV")
+  into readable names, and to recognize which token in a parsed line is a location.
+
+  Coordinates are ONLY included for buildings we've verified against an independent source (see
+  comments below) — everything else is name-only. Presenting a guessed coordinate as fact would be
+  worse than not having one; same reasoning as the manual Lat/Lng field already in this app. If you
+  add more, right-click the building on Google Maps or map.ucsb.edu and paste the real coordinates.
+*/
+const BUILDING_DB = {
+  // Full list from UCSB Office of the Registrar's "Building Location Code Translations" page
+  // (sites.cs.ucsb.edu/~pconrad/cs56/11W/lectures/01.03/locationcodes.htm, last modified Sept 2010).
+  // This is the authoritative source for what GOLD's location codes actually mean — a few buildings
+  // built/renamed after 2010 may be missing; add them the same way if you spot one.
+  'BRDA':  { name:'Broida Hall (Physics)' },
+  'BREN':  { name:'Bren Hall' },
+  'BSIF':  { name:'Biological Sciences Instructional Facility' },
+  'BUCHN': { name:'Buchanan Hall' },
+  'BIOL2': { name:'Biological Sciences II' },
+  'CAMPB HALL': { name:'Campbell Hall' },
+  'CHEM':  { name:'Chemistry Building' },
+  'ELLSN': { name:'Ellison Hall' },
+  'ENGR1': { name:'Harold Frank Hall (formerly Engineering I)' },
+  'ENGR2': { name:'Engineering Building II' },
+  'ENGR3': { name:'Engineering Building III' },
+  'ESB':   { name:'Engineering Sciences Building' },
+  'GIRV':  { name:'Girvetz Hall' },
+  'HFH':   { name:'Harold Frank Hall' },
+  'HSSB':  { name:'Humanities and Social Sciences Building' },
+  'KERR':  { name:'Kerr Hall' },
+  'KOHN':  { name:'Kohn Hall' },
+  'LIB':   { name:'Library' },
+  'LSB':   { name:'Life Science Building' },
+  'MLAB':  { name:'Marine Biology Laboratory' },
+  'MUSIC': { name:'Music Building' },
+  'MUSIC LLCH': { name:'Lotte Lehmann Concert Hall' },
+  'NOBLE': { name:'Noble Hall' },
+  'NH':    { name:'North Hall' },
+  'PHELP': { name:'Phelps Hall' },
+  'PSB-N': { name:'Physical Sciences Building North' },
+  'PSB-S': { name:'Physical Sciences Building South' },
+  'PSYCH': { name:'Psychology Building' },
+  'RGYM':  { name:'Robertson Gym' },
+  'SAASB': { name:'Student Affairs and Administrative Services Building' },
+  'SH':    { name:'South Hall' },
+  'SRB':   { name:'Student Resources Building' },
+  'STU HLTH': { name:'Student Health Center' },
+  'TD-E':  { name:'Theater/Dance East' },
+  'TD-W':  { name:'Theater/Dance West' },
+  'WEBB':  { name:'Webb Hall (Geological Sciences)' },
+  'ARTS':  { name:'Arts Building' },
+  'EVENT CENTR': { name:'Event Center' },
+  'RECEN': { name:'Recreation Center' },
+};
+
+// Coordinates verified against geoview.info / latlong.net building-level records (not campus-centroid guesses).
+// Independently verified building coordinates (geoview.info building-level records + UCSB campus
+// map cross-reference). These SEED the editable per-quarter registry (state.buildingCoords) so the
+// walk-time feature works out of the box for these, and the user can add the rest once — after which
+// every course in that building auto-uses them.
+const BUILDING_COORDS = {
+  'GIRV':  { lat:34.41333, lng:-119.84708 },
+  'BRDA':  { lat:34.41416, lng:-119.84292 },
+  'PHELP': { lat:34.41611, lng:-119.84431 },
+};
+function lookupBuildingCode(locationStr){
+  if(!locationStr) return null;
+  const m = locationStr.trim().toUpperCase().match(/^([A-Z&]+)/);
+  return m ? m[1] : null;
+}
+function expandBuildingName(locationStr){
+  const code = lookupBuildingCode(locationStr);
+  return (code && BUILDING_DB[code]) ? BUILDING_DB[code].name : null;
+}
+// Resolves coordinates for a location string. Checks the editable registry first (user-entered or
+// seeded), so anything the student adds once is reused everywhere automatically.
+function lookupBuildingCoords(locationStr){
+  const code = lookupBuildingCode(locationStr);
+  if(!code) return null;
+  if(state.buildingCoords && state.buildingCoords[code]) return state.buildingCoords[code];
+  if(BUILDING_COORDS[code]) return BUILDING_COORDS[code];
+  return null;
+}
+// Ensures state.buildingCoords exists and contains the verified seed coordinates.
+function seedBuildingCoords(){
+  if(!state.buildingCoords) state.buildingCoords = {};
+  Object.keys(BUILDING_COORDS).forEach(code=>{
+    if(!state.buildingCoords[code]) state.buildingCoords[code] = { ...BUILDING_COORDS[code] };
+  });
+}
+// Google Maps search link for a building — one click to find its coordinates (right-click the pin →
+// the lat/lng is shown, and can be pasted back into the registry).
+function buildingMapLink(code){
+  const name = (BUILDING_DB[code] && BUILDING_DB[code].name) || code;
+  return `https://www.google.com/maps/search/${encodeURIComponent('UCSB ' + name)}`;
+}
+// RateMyProfessors search link for an instructor. GOLD gives names as "LAST F M" (e.g. "PORTER M J")
+// or "MEDINA R W"; we search RMP scoped to UCSB with the raw name — RMP's search tolerates the order.
+// This closes the loop between "the app already knows the professor" and "help me rate them" without
+// claiming to know a rating we haven't verified.
+function rmpSearchLink(instructor){
+  if(!instructor || !instructor.trim()) return null;
+  const q = encodeURIComponent(instructor.trim() + ' University of California Santa Barbara');
+  return `https://www.ratemyprofessors.com/search/professors?q=${q}`;
+}
+// The public curriculum search is an ASP.NET postback form with no deep-linkable query params (you
+// can't pre-filter it by course via URL — confirmed), so this links to the search page itself. It's
+// the re-check destination for the staleness system: seats and open/closed status drift constantly,
+// so the app can't know your data is current — it can only make re-verifying one click away.
+const UCSB_COURSE_SEARCH_URL = 'https://my.sa.ucsb.edu/public/curriculum/coursesearch.aspx';
+const STALE_AFTER_HOURS = 24; // past this, imported data is flagged as possibly out of date
+function hoursSince(iso){
+  if(!iso) return null;
+  return (Date.now() - new Date(iso).getTime()) / 3600000;
+}
+function humanizeAge(iso){
+  const h = hoursSince(iso);
+  if(h==null) return 'never';
+  if(h < 1) return `${Math.round(h*60)} min ago`;
+  if(h < 24) return `${Math.round(h)} hr ago`;
+  return `${Math.round(h/24)} day(s) ago`;
+}
+// Data-freshness banner. A static page can't query GOLD live (ASP.NET postback, no API/CORS), so it
+// can't truly know if seats/status changed — instead it timestamps imports and nudges a re-check when
+// the data is old or when you're likely registering. Honest about what it can and can't verify.
+function renderFreshnessBanner(){
+  const el = document.getElementById('freshnessBanner');
+  if(!el) return;
+  if(state.courses.length===0){ el.innerHTML=''; return; }
+  const age = hoursSince(state.lastImportAt);
+  const stale = age==null || age > STALE_AFTER_HOURS;
+  const bg = stale ? '#FDEDE7' : '#EAF3EC';
+  const fg = stale ? 'var(--coral)' : 'var(--green)';
+  const msg = state.lastImportAt
+    ? `Course data last imported ${humanizeAge(state.lastImportAt)}.`
+    : `This data wasn't imported from GOLD (entered manually or from an older backup).`;
+  const note = stale
+    ? ' Seats and open/closed status change constantly during registration — re-paste from GOLD to be sure it\'s current.'
+    : ' Still, seats can change any minute during registration.';
+  el.innerHTML = `
+    <div style="background:${bg};color:${fg};border-radius:2px;padding:8px 12px;font-size:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span>${msg}${note}</span>
+      <a class="btn ghost small" href="${UCSB_COURSE_SEARCH_URL}" target="_blank" rel="noopener" style="flex:none;">Re-check on GOLD</a>
+    </div>`;
+}
+// Every distinct building code currently referenced by any course location, so the registry only
+// shows buildings you actually use.
+function buildingCodesInUse(){
+  const set = new Set();
+  state.courses.forEach(c=> c.lectures.forEach(l=>{
+    l.blocks.forEach(b=>{ const code = lookupBuildingCode(b.location); if(code) set.add(code); });
+    l.sections.forEach(s=> s.blocks.forEach(b=>{ const code = lookupBuildingCode(b.location); if(code) set.add(code); }));
+  }));
+  return Array.from(set).sort();
+}
+
+/* ================= GOLD PASTE PARSER ================= */
+/*
+  GOLD's course-search results paste as tab-separated (sometimes multi-space) text. A "lecture" is
+  usually two source lines: a header line (course code, title, instructor) and a following detail
+  line (days, time, location, seats) that does NOT repeat the course code. Discussion/lab "sections"
+  are typically single self-contained lines that include an enrollment code. This parser classifies
+  each token by shape (regex) rather than by column position, since real GOLD exports vary in spacing
+  and sometimes fold everything onto one line.
+*/
+const GoldParser = {
+  // Subject codes are sometimes two or three words: "RG ST 30", "BLK ST 5", "POL S 1", "ART HI 2".
+  // Previously this only matched single-word subjects (MATH, CS), so any multi-word department
+  // silently failed to parse at all.
+  RE_CODE: /^[A-Z&]{1,6}(?:\s[A-Z&]{1,6}){0,2}\s?\d{1,3}[A-Z]{0,3}$/i,
+  RE_ENROLL: /^\d{4,6}$/,
+  RE_STATUS: /^(full|closed|cancell?ed|waitlist)$/i,
+  RE_DAYS: /^[MTWRFS]{1,7}$/i,
+  RE_TIME: /^\d{1,2}:\d{2}\s*[ap]m\s*-\s*\d{1,2}:\d{2}\s*[ap]m$/i,
+  RE_SEATS: /^\d+\s*\/\s*\d+$/,
+  // Building/room codes look like "GIRV 2119", "BUCHN1910", "SH 1609" — 2-8 letters, optional
+  // single space, 2-5 digit room number, optional trailing letter. This intentionally does NOT
+  // match multi-word titles that happen to end in a number (e.g. "CALC WITH APPLI 1").
+  RE_LOC: /^[A-Z&]{2,8}\s?\d{2,5}[A-Z]?$/i,
+
+  tokenize(line){
+    return line.split(/\t+|\s{2,}/).map(s=>s.trim()).filter(Boolean);
+  },
+  parseTime(str){
+    const m = str.trim().match(/^(\d{1,2}):(\d{2})\s*([ap]m)$/i);
+    if(!m) return null;
+    let h = Number(m[1]);
+    const ap = m[3].toLowerCase();
+    if(ap==='pm' && h!==12) h += 12;
+    if(ap==='am' && h===12) h = 0;
+    return String(h).padStart(2,'0')+':'+m[2];
+  },
+  classify(tokens){
+    const out = { status:null, enroll:null, days:null, start:null, end:null, location:null, seatsOpen:null, seatsTotal:null, textTokens:[] };
+    tokens.forEach(tok=>{
+      if(this.RE_STATUS.test(tok)){ out.status = tok.toLowerCase(); return; }
+      if(this.RE_TIME.test(tok)){
+        const parts = tok.split('-').map(s=>s.trim());
+        out.start = this.parseTime(parts[0]); out.end = this.parseTime(parts[1]);
+        return;
+      }
+      if(this.RE_SEATS.test(tok)){
+        const parts = tok.split('/').map(s=>Number(s.trim()));
+        out.seatsOpen = parts[0]; out.seatsTotal = parts[1];
+        return;
+      }
+      if(this.RE_ENROLL.test(tok)){ out.enroll = tok; return; }
+      if(this.RE_DAYS.test(tok.replace(/\s+/g,''))){ out.days = Validator.normalizeDays(tok.replace(/\s+/g,'').toUpperCase().split('')); return; }
+      if(this.RE_LOC.test(tok)){ out.location = tok; return; }
+      out.textTokens.push(tok);
+    });
+    return out;
+  },
+  // Parses a full pasted block into { courses:[...], stats:{...}, warnings:[...] }
+  parse(text){
+    const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+    const warnings = [];
+    const coursesByCode = new Map(); // code -> { code, lectures:[...] }
+    let pendingLecture = null; // { code, lecture } waiting for a continuation detail line
+    let currentLectureByCode = new Map(); // code -> most recently opened lecture (for attaching sections)
+    let lecturesFound=0, sectionsFound=0, closedFound=0;
+
+    lines.forEach((rawLine, idx)=>{
+      const tokens = this.tokenize(rawLine);
+      if(tokens.length===0) return;
+      const first = tokens[0];
+
+      if(this.RE_CODE.test(first)){
+        const code = Validator.normalizeCourseCode(first);
+        const cls = this.classify(tokens.slice(1));
+        if(!coursesByCode.has(code)) coursesByCode.set(code, { code, lectures:[] });
+        const courseEntry = coursesByCode.get(code);
+
+        if(cls.enroll){
+          // Standalone section line — attach to the most recent lecture opened for this course code
+          let lec = currentLectureByCode.get(code);
+          if(!lec){
+            // No parent lecture seen yet — create an implicit one so the section isn't lost
+            lec = { instructor:'', rating:null, seatsOpen:0, seatsTotal:0, blocks:[{days:[],start:'',end:'',location:'',zone:''}], sections:[] };
+            courseEntry.lectures.push(lec);
+            currentLectureByCode.set(code, lec);
+            lecturesFound++;
+            warnings.push(`${code}: section ${cls.enroll} appeared before any lecture header — grouped under a placeholder lecture, check it manually.`);
+          }
+          const isClosed = cls.status==='full' || cls.status==='closed' || cls.status==='cancelled' || cls.status==='canceled';
+          if(isClosed) closedFound++;
+          lec.sections.push({
+            enroll: cls.enroll, ta:'', seatsOpen: cls.seatsOpen ?? 0, seatsTotal: cls.seatsTotal ?? 0,
+            _closed: isClosed,
+            blocks:[{ days: cls.days||[], start: cls.start||'', end: cls.end||'', location: cls.location||'', zone:'' }]
+          });
+          sectionsFound++;
+        } else {
+          // Header line for a new lecture
+          const title = cls.textTokens.length>=2 ? cls.textTokens[0] : '';
+          const instructor = cls.textTokens.length>=1 ? cls.textTokens[cls.textTokens.length-1] : '';
+          if(title && !courseEntry.title) courseEntry.title = title;
+          const lec = { instructor, rating:null, seatsOpen: cls.seatsOpen ?? 0, seatsTotal: cls.seatsTotal ?? 0,
+            _closed: cls.status==='full' || cls.status==='closed',
+            blocks:[{ days: cls.days||[], start: cls.start||'', end: cls.end||'', location: cls.location||'', zone:'' }], sections:[] };
+          courseEntry.lectures.push(lec);
+          currentLectureByCode.set(code, lec);
+          lecturesFound++;
+          if(!cls.start){
+            pendingLecture = { code, lec }; // needs a continuation line for day/time/location/seats
+          } else {
+            pendingLecture = null;
+          }
+        }
+      } else if(this.RE_DAYS.test(first.replace(/\s+/g,'')) && pendingLecture){
+        // Continuation line completing the most recent header-only lecture
+        const cls = this.classify(tokens);
+        const b = pendingLecture.lec.blocks[0];
+        b.days = cls.days || Validator.normalizeDays(first.replace(/\s+/g,'').toUpperCase().split(''));
+        if(cls.start){ b.start = cls.start; b.end = cls.end; }
+        if(cls.location) b.location = cls.location;
+        if(cls.seatsOpen!=null){ pendingLecture.lec.seatsOpen = cls.seatsOpen; pendingLecture.lec.seatsTotal = cls.seatsTotal; }
+        pendingLecture = null;
+      } else {
+        warnings.push(`Could not parse line, skipped: "${rawLine.slice(0,80)}"`);
+      }
+    });
+
+    return { courses: Array.from(coursesByCode.values()), stats:{ lecturesFound, sectionsFound, closedFound }, warnings };
+  }
+};
+
+function importListingFromUI(){
+  const text = document.getElementById('pasteListing').value;
+  if(!text.trim()){ toast('Paste some GOLD listing text first.'); return; }
+  const result = GoldParser.parse(text);
+  if(result.courses.length===0){ toast('Nothing recognizable found in that paste.'); return; }
+
+  const nowIso = new Date().toISOString();
+  let updated=0, created=0, newlyExcluded=0, autoCoordsFilled=0;
+  result.courses.forEach(parsed=>{
+    // Fill per-block coordinates from the building registry so walk times work immediately.
+    const finalizeBlock = b=>{
+      if((b.lat==null || b.lng==null) && b.location){
+        const coords = lookupBuildingCoords(b.location);
+        if(coords){ b.lat = coords.lat; b.lng = coords.lng; autoCoordsFilled++; }
+      }
+    };
+    parsed.lectures.forEach(l=>{
+      l.id = uid('l');
+      l.blocks.forEach(finalizeBlock);
+      if(l._closed) state.excluded.add(l.id), newlyExcluded++;
+      delete l._closed;
+      l.sections.forEach(s=>{
+        s.id = uid('s');
+        s.blocks.forEach(finalizeBlock);
+        if(s._closed) state.excluded.add(s.id), newlyExcluded++;
+        delete s._closed;
+      });
+    });
+    const existing = state.courses.find(c=>c.code.toUpperCase()===parsed.code.toUpperCase());
+    if(existing){
+      existing.lectures = parsed.lectures;
+      if(parsed.title && !existing.title) existing.title = parsed.title;
+      existing.importedAt = nowIso;
+      updated++;
+    } else {
+      state.courses.push({
+        id: uid('c'), code: parsed.code, title: parsed.title||'', colorIdx: nextColorIdx(),
+        active:true, required:false, importedAt: nowIso,
+        units:'', college:'', prerequisite:'', grading:'', description:'',
+        lectures: parsed.lectures
+      });
+      created++;
+    }
+  });
+  state.lastImportAt = nowIso;
+
+  render();
+  const summary = `Parsed ${result.stats.lecturesFound} lecture(s), ${result.stats.sectionsFound} section(s) · ${created} course(s) added, ${updated} updated · ${newlyExcluded} marked full/closed${autoCoordsFilled?` · ${autoCoordsFilled} location(s) auto-mapped to coordinates`:''}`;
+  document.getElementById('importSummary').textContent = summary;
+  let reportHTML = `<div class="import-report"><span class="ok">${summary}</span>`;
+  if(result.warnings.length){
+    reportHTML += `<br><span class="warn">${result.warnings.length} warning(s):</span><br>` + result.warnings.map(w=>'• '+esc(w)).join('<br>');
+  }
+  reportHTML += `</div>`;
+  toast(summary);
+  const existingReport = document.getElementById('importReportBox');
+  if(existingReport) existingReport.remove();
+  const box = document.createElement('div');
+  box.id = 'importReportBox';
+  box.innerHTML = reportHTML;
+  document.getElementById('importSummary').parentElement.insertAdjacentElement('afterend', box);
+}
+
+/* ================= COURSE DESCRIPTION PARSER ================= */
+function parseDescriptionBlock(text){
+  const out = {};
+  text.split('\n').forEach(line=>{
+    const m = line.match(/^\s*([^:\t]+)[:\t]+\s*(.*)$/);
+    if(!m) return;
+    const label = m[1].trim().toLowerCase().replace(/\s+/g,'');
+    const value = m[2].trim();
+    if(!value) return;
+    if(label==='fulltitle') out.title = value;
+    else if(label==='description') out.description = value;
+    else if(label==='prerequisite'||label==='prerequisites') out.prerequisite = value;
+    else if(label==='college') out.college = value;
+    else if(label==='units') out.units = value;
+    else if(label==='grading') out.grading = value;
+  });
+  return out;
+}
+function populateDescTargetOptions(){
+  const sel = document.getElementById('descTargetCourse');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = state.courses.map(c=>`<option value="${c.id}">${esc(c.code)}${c.title?' — '+esc(c.title):''}</option>`).join('') || '<option value="">No courses yet</option>';
+  if(state.courses.some(c=>c.id===prev)) sel.value = prev;
+}
+function applyDescriptionFromUI(){
+  const cid = document.getElementById('descTargetCourse').value;
+  const text = document.getElementById('pasteDescription').value;
+  if(!cid){ toast('Add a course first, then select it here.'); return; }
+  if(!text.trim()){ toast('Paste a course description block first.'); return; }
+  const c = state.courses.find(c=>c.id===cid);
+  if(!c){ toast('Selected course no longer exists.'); return; }
+  const parsed = parseDescriptionBlock(text);
+  if(Object.keys(parsed).length===0){ toast('Could not find any recognizable fields in that text.'); return; }
+  if(parsed.title) c.title = Validator.sanitizeText(parsed.title);
+  if(parsed.description) c.description = Validator.sanitizeText(parsed.description);
+  if(parsed.prerequisite) c.prerequisite = Validator.sanitizeText(parsed.prerequisite);
+  if(parsed.college) c.college = Validator.sanitizeText(parsed.college);
+  if(parsed.units) c.units = Validator.sanitizeText(parsed.units);
+  if(parsed.grading) c.grading = Validator.sanitizeText(parsed.grading);
+  render();
+  toast(`Attached ${Object.keys(parsed).length} field(s) to ${c.code}.`);
+}
+
+/* ================= IMPORT / EXPORT ================= */
+function currentBackupData(){
+  return { version: SCHEMA_VERSION, savedAt: new Date().toISOString(),
+    courses: state.courses, buildingCoords: state.buildingCoords, weights: state.weights,
+    quarterLabel: state.quarterLabel, defaultRatingForUnknown: state.defaultRatingForUnknown, includeInvalidPlans: state.includeInvalidPlans,
+    courseCountLimit: state.courseCountLimit, lastImportAt: state.lastImportAt, excluded: Array.from(state.excluded),
+    // legacy fields kept for backward-compatible restore in older app versions:
+    zones: state.zones, crossDist: state.crossDist, sameZoneMin: state.sameZoneMin };
+}
+function safeFilename(name){ return (name||'ucsb-schedule').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'') || 'ucsb-schedule'; }
+
+/* ================= MULTI-QUARTER SAVE SLOTS ================= */
+/*
+  Each "quarter" (Fall 2026, Winter 2026, ...) is a full state snapshot keyed by its label. Kept
+  in-memory always (quarterSlots), and ALSO written to localStorage when available so it survives
+  a reload — but per the Claude.ai artifact sandbox restriction, localStorage is NOT guaranteed to
+  work inside the published-artifact preview. storageAvailable() feature-detects this with a
+  try/catch so a blocked localStorage never throws; when it's unavailable we say so plainly instead
+  of pretending the data is safely persisted.
+*/
+const AUTOSAVE_PREFIX = 'ucsb-schedule-autosave:';
+let quarterSlots = {}; // quarterLabel -> JSON string (same shape as currentBackupData())
+let storageAvailableCache = null;
+function storageAvailable(){
+  if(storageAvailableCache!==null) return storageAvailableCache;
+  try{ const k='__ucsb_test__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); storageAvailableCache = true; }
+  catch(e){ storageAvailableCache = false; }
+  return storageAvailableCache;
+}
+function loadQuarterSlotsIndex(){
+  if(!storageAvailable()) return;
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(AUTOSAVE_PREFIX)) quarterSlots[k.slice(AUTOSAVE_PREFIX.length)] = localStorage.getItem(k);
+    }
+  }catch(e){ /* ignore — quarterSlots just stays whatever was already in memory */ }
+}
+function autosaveTick(){
+  if(!state.quarterLabel) return; // untitled quarters aren't auto-saved to a slot — name it first
+  const snap = JSON.stringify(currentBackupData());
+  quarterSlots[state.quarterLabel] = snap;
+  if(storageAvailable()){
+    try{ localStorage.setItem(AUTOSAVE_PREFIX+state.quarterLabel, snap); }catch(e){ storageAvailableCache = false; }
+  }
+  refreshQuarterDropdown();
+}
+function refreshQuarterDropdown(){
+  const sel = document.getElementById('quarterSelect');
+  if(!sel) return;
+  const names = Object.keys(quarterSlots).sort();
+  sel.innerHTML = '<option value="">— no saved quarters —</option>' +
+    names.map(n=>`<option value="${esc(n)}" ${n===state.quarterLabel?'selected':''}>${esc(n)}</option>`).join('');
+}
+function onQuarterSelectChange(){
+  const name = document.getElementById('quarterSelect').value;
+  if(!name) return;
+  loadQuarterSlot(name);
+}
+function loadQuarterSlot(name){
+  const snap = quarterSlots[name];
+  if(!snap){ toast('No saved data found for that quarter.'); return; }
+  const data = JSON.parse(snap);
+  state.courses = data.courses||[];
+  state.buildingCoords = data.buildingCoords || {};
+  state.zones = data.zones||[]; state.crossDist = data.crossDist||{}; state.sameZoneMin = data.sameZoneMin ?? 3; // legacy
+  state.weights = data.weights || state.weights;
+  state.defaultRatingForUnknown = data.defaultRatingForUnknown ?? 3.0;
+  state.includeInvalidPlans = data.includeInvalidPlans ?? false;
+  state.courseCountLimit = data.courseCountLimit ?? null;
+  state.lastImportAt = data.lastImportAt ?? null;
+  state.excluded = new Set(data.excluded||[]);
+  state.quarterLabel = name;
+  seedBuildingCoords();
+  document.getElementById('quarterLabel').value = name;
+  resyncUidCounter(); resyncColorIdx(); ensureCourseSelectionDefaults();
+  historyStack = []; historyIndex = -1; dirty = false;
+  saveWeightsToInputs();
+  renderBuildingCoords();
+  render();
+  syncCourseCountLimitSelect();
+  refreshQuarterDropdown();
+  toast(`Loaded "${name}".`);
+}
+function saveCurrentQuarter(){
+  if(!state.quarterLabel || !state.quarterLabel.trim()){
+    toast('Type a quarter/term name first (e.g. "Fall 2026"), then click Save Quarter.');
+    return;
+  }
+  autosaveTick();
+  toast(`Saved "${state.quarterLabel}"${storageAvailable() ? ' — persisted locally.' : ' for this session only (persistent storage isn\'t available in this environment — download a backup to keep it).'}`);
+  showPostSaveQuarterPrompt(state.quarterLabel);
+}
+
+/* ================= QUARTER-NAME PROMPTS (startup + post-save) ================= */
+// Native prompt()/confirm() are unreliable in this environment (see clearAll's note above), so this
+// reuses the same custom-modal pattern instead of window.prompt().
+let quarterPromptMode = null; // 'startup' | 'postsave'
+function showStartupQuarterPrompt(){
+  quarterPromptMode = 'startup';
+  document.getElementById('quarterPromptTitle').textContent = 'What quarter are you planning?';
+  document.getElementById('quarterPromptMsg').textContent = 'Name it and this session will auto-save under that name as you go — or skip to start with no name.';
+  document.getElementById('quarterPromptConfirmBtn').textContent = 'Start';
+  document.getElementById('quarterPromptInput').value = '';
+  document.getElementById('quarterPromptModal').style.display = 'flex';
+}
+function showPostSaveQuarterPrompt(savedName){
+  quarterPromptMode = 'postsave';
+  document.getElementById('quarterPromptTitle').textContent = `Saved "${savedName}"`;
+  document.getElementById('quarterPromptMsg').textContent = 'Start a new blank quarter now (name it below), or stay here and keep editing this one?';
+  document.getElementById('quarterPromptConfirmBtn').textContent = 'Start New Quarter';
+  document.getElementById('quarterPromptInput').value = '';
+  document.getElementById('quarterPromptModal').style.display = 'flex';
+}
+function confirmQuarterPrompt(){
+  const name = Validator.sanitizeText(document.getElementById('quarterPromptInput').value.trim());
+  document.getElementById('quarterPromptModal').style.display = 'none';
+  if(quarterPromptMode==='startup'){
+    if(name){ state.quarterLabel = name; document.getElementById('quarterLabel').value = name; refreshQuarterDropdown(); toast(`Starting "${name}".`); }
+  } else if(quarterPromptMode==='postsave'){
+    startBlankQuarter(name);
+  }
+}
+function skipQuarterPrompt(){
+  document.getElementById('quarterPromptModal').style.display = 'none';
+  // startup: proceed with no name (default). postsave: just stay in the current quarter. Either way, no action needed.
+}
+function startBlankQuarter(name){
+  state = { courses:[], zones:[], crossDist:{}, sameZoneMin:3, buildingCoords:{}, weights:{rating:.5,travel:.3,seats:.2}, excluded:new Set(),
+    quarterLabel:name||'', defaultRatingForUnknown:3.0, includeInvalidPlans:false, courseCountLimit:null, lastImportAt:null };
+  colorCounter = 0;
+  historyStack = []; historyIndex = -1; dirty = false;
+  seedBuildingCoords();
+  saveWeightsToInputs();
+  document.getElementById('quarterLabel').value = state.quarterLabel;
+  document.getElementById('quarterSelect').value = '';
+  renderBuildingCoords();
+  render();
+  syncCourseCountLimitSelect();
+  toast(name ? `Started new quarter "${name}".` : 'Started a new blank quarter.');
+}
+
+/* ================= ZIP EXPORT (hand-rolled — no CDN dependency, so it can't fail the way the
+   sandboxed download already has) ================= */
+const CRC_TABLE = (()=>{
+  const table = [];
+  for(let n=0;n<256;n++){
+    let c = n;
+    for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    table[n] = c>>>0;
+  }
+  return table;
+})();
+function crc32(bytes){
+  let crc = 0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function dosDateTime(date){
+  const time = ((date.getHours()&0x1F)<<11) | ((date.getMinutes()&0x3F)<<5) | ((Math.floor(date.getSeconds()/2))&0x1F);
+  const day = (((date.getFullYear()-1980)&0x7F)<<9) | (((date.getMonth()+1)&0xF)<<5) | (date.getDate()&0x1F);
+  return {time, day};
+}
+// Builds a valid, uncompressed ("store" method) ZIP file from {name, content} entries. No
+// compression means larger files, but it's a handful of small JSON files, so that's a non-issue —
+// and it means zero external dependencies for something this small.
+function buildZip(files){
+  const encoder = new TextEncoder();
+  const localChunks = [];
+  const centralChunks = [];
+  let offset = 0;
+  const {time, day} = dosDateTime(new Date());
+  files.forEach(f=>{
+    const nameBytes = encoder.encode(f.name);
+    const dataBytes = encoder.encode(f.content);
+    const crc = crc32(dataBytes);
+
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);
+    lh.setUint16(4, 20, true);
+    lh.setUint16(6, 0, true);
+    lh.setUint16(8, 0, true);
+    lh.setUint16(10, time, true);
+    lh.setUint16(12, day, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, dataBytes.length, true);
+    lh.setUint32(22, dataBytes.length, true);
+    lh.setUint16(26, nameBytes.length, true);
+    lh.setUint16(28, 0, true);
+    localChunks.push(new Uint8Array(lh.buffer), nameBytes, dataBytes);
+    const localSize = 30 + nameBytes.length + dataBytes.length;
+
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true);
+    ch.setUint16(4, 20, true);
+    ch.setUint16(6, 20, true);
+    ch.setUint16(8, 0, true);
+    ch.setUint16(10, 0, true);
+    ch.setUint16(12, time, true);
+    ch.setUint16(14, day, true);
+    ch.setUint32(16, crc, true);
+    ch.setUint32(20, dataBytes.length, true);
+    ch.setUint32(24, dataBytes.length, true);
+    ch.setUint16(28, nameBytes.length, true);
+    ch.setUint16(30, 0, true);
+    ch.setUint16(32, 0, true);
+    ch.setUint16(34, 0, true);
+    ch.setUint16(36, 0, true);
+    ch.setUint32(38, 0, true);
+    ch.setUint32(42, offset, true);
+    centralChunks.push(new Uint8Array(ch.buffer), nameBytes);
+
+    offset += localSize;
+  });
+  const centralStart = offset;
+  let centralSize = 0;
+  centralChunks.forEach(c=>centralSize+=c.length);
+
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true);
+  end.setUint16(4, 0, true);
+  end.setUint16(6, 0, true);
+  end.setUint16(8, files.length, true);
+  end.setUint16(10, files.length, true);
+  end.setUint32(12, centralSize, true);
+  end.setUint32(16, centralStart, true);
+  end.setUint16(20, 0, true);
+
+  const all = localChunks.concat(centralChunks, [new Uint8Array(end.buffer)]);
+  let totalLen = 0; all.forEach(a=>totalLen+=a.length);
+  const result = new Uint8Array(totalLen);
+  let pos=0; all.forEach(a=>{ result.set(a, pos); pos+=a.length; });
+  return result;
+}
+function attemptBlobDownloadBinary(bytes, filename, mimeType){
+  try{
+    const blob = new Blob([bytes], {type:mimeType});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('If no save dialog appeared, downloads are blocked here — copy each quarter individually below instead.');
+  }catch(err){
+    toast('Zip download failed here — copy each quarter individually below instead.');
+  }
+}
+function copyQuarterJSON(name){
+  const ta = document.createElement('textarea');
+  ta.value = quarterSlots[name] || '';
+  ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta);
+  copyTextToClipboard(ta);
+  ta.remove();
+}
+function downloadAllQuarters(){
+  const names = Object.keys(quarterSlots);
+  if(names.length===0){ toast('No saved quarters yet — name the current one and click "Save Quarter" first.'); return; }
+  const files = names.map(n=>({name: safeFilename(n)+'.json', content: quarterSlots[n]}));
+  document.getElementById('exportModalTitle').textContent = 'Download All Quarters (.zip)';
+  document.getElementById('exportModalText').value = `This zip would contain ${names.length} file(s):\n` + names.map(n=>'  • '+safeFilename(n)+'.json').join('\n');
+  document.getElementById('exportModalExtra').innerHTML =
+    '<p style="font-size:11px;color:var(--ink-soft);margin-bottom:6px;">If the zip download doesn\'t work, copy each quarter\'s JSON individually instead:</p>' +
+    names.map(n=>`<div class="detail-row" style="padding:4px 0;"><span class="mono" style="font-size:12px;">${esc(n)}</span><button class="btn small" onclick='copyQuarterJSON(${JSON.stringify(n)})'>Copy JSON</button></div>`).join('');
+  document.getElementById('exportModalDownloadBtn').onclick = ()=>{
+    const zipBytes = buildZip(files);
+    attemptBlobDownloadBinary(zipBytes, 'ucsb-schedule-all-quarters.zip', 'application/zip');
+  };
+  document.getElementById('exportModal').style.display = 'flex';
+}
+
+/*
+  Downloads inside Claude's published-artifact preview are frequently blocked by the sandbox
+  ("content blocked, contact site owner") — this isn't something the page's JS can fix. Every export
+  path below therefore opens a modal with the raw text visible and a Copy-to-Clipboard button that
+  works regardless of download restrictions, alongside a best-effort direct-download button for
+  contexts where downloads DO work (self-hosted, or opened as a local file).
+*/
+function openExportModal(title, text, filename, mimeType){
+  document.getElementById('exportModalTitle').textContent = title;
+  document.getElementById('exportModalText').value = text;
+  document.getElementById('exportModalExtra').innerHTML = '';
+  document.getElementById('exportModal').style.display = 'flex';
+  document.getElementById('exportModalDownloadBtn').onclick = ()=> attemptBlobDownload(text, filename, mimeType);
+}
+function closeExportModal(){ document.getElementById('exportModal').style.display = 'none'; }
+function attemptBlobDownload(text, filename, mimeType){
+  try{
+    const blob = new Blob([text], {type: mimeType||'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast("If no save dialog appeared, downloads are blocked in this environment — use Copy to Clipboard instead.");
+  }catch(err){
+    toast('Direct download failed here — use Copy to Clipboard instead.');
+  }
+}
+function copyExportModalText(){ copyTextToClipboard(document.getElementById('exportModalText')); }
+function copyTextToClipboard(textareaEl){
+  textareaEl.focus(); textareaEl.select();
+  try{ textareaEl.setSelectionRange(0, 999999999); }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(textareaEl.value)
+      .then(()=>toast('Copied to clipboard.'))
+      .catch(()=>fallbackExecCopy());
+  } else {
+    fallbackExecCopy();
+  }
+  function fallbackExecCopy(){
+    let ok=false;
+    try{ ok = document.execCommand('copy'); }catch(e){}
+    toast(ok ? 'Copied to clipboard.' : 'Could not copy automatically — the text above is already selected, press Ctrl+C (or Cmd+C on Mac).');
+  }
+}
+function exportJSON(){
+  const text = JSON.stringify(currentBackupData(), null, 2);
+  openExportModal(`Download Backup — ${state.quarterLabel||'Untitled Quarter'}`, text, `${safeFilename(state.quarterLabel)}-backup.json`, 'application/json');
+  dirty = false;
+  updateUndoRedoUI();
+}
+function importJSON(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      const fileVersion = data.version || 1; // v1 = pre-versioning backups (no `version` field)
+      if(fileVersion > SCHEMA_VERSION){
+        toast(`This backup was saved by a newer version of the app (schema v${fileVersion}) — some fields may not load correctly.`);
+      }
+      state.courses = data.courses||[];
+      state.buildingCoords = data.buildingCoords || {};
+      state.zones = data.zones||[]; state.crossDist = data.crossDist||{}; state.sameZoneMin = data.sameZoneMin ?? 3; // legacy
+      state.weights = data.weights || state.weights;
+      state.quarterLabel = data.quarterLabel || '';
+      state.defaultRatingForUnknown = data.defaultRatingForUnknown ?? 3.0;
+      state.includeInvalidPlans = data.includeInvalidPlans ?? false;
+      state.courseCountLimit = data.courseCountLimit ?? null;
+      state.lastImportAt = data.lastImportAt ?? null;
+      state.excluded = new Set();
+      seedBuildingCoords();
+      resyncUidCounter();
+      resyncColorIdx(); ensureCourseSelectionDefaults();
+      historyStack = []; historyIndex = -1; dirty = false;
+      saveWeightsToInputs();
+      document.getElementById('quarterLabel').value = state.quarterLabel;
+      renderBuildingCoords();
+      render();
+      syncCourseCountLimitSelect();
+      refreshQuarterDropdown();
+      const issues = runDataHealthCheck(false);
+      toast(issues.length ? `Backup restored — ${issues.length} data issue(s) found, see Buildings & Weights tab.` : 'Backup restored.');
+    }catch(err){ toast('Could not read that file — is it a valid backup?'); }
+  };
+  reader.readAsText(file);
+}
+function showConfirm(message, onYes){
+  document.getElementById('confirmModalMsg').textContent = message;
+  const yesBtn = document.getElementById('confirmModalYes');
+  yesBtn.onclick = ()=>{ closeConfirmModal(); onYes(); };
+  document.getElementById('confirmModal').style.display = 'flex';
+}
+function closeConfirmModal(){ document.getElementById('confirmModal').style.display = 'none'; }
+// Native confirm()/alert()/prompt() are blocked by the same sandbox restriction as downloads inside
+// Claude's published-artifact preview — this was the actual cause of "Clear Everything does nothing":
+// confirm() silently returned falsy, so the function always hit its early return. Custom in-page
+// modals (like this one) are plain DOM/CSS and aren't affected by that restriction.
+function clearAll(){
+  showConfirm('This clears all courses, buildings, and marked-full sections. Continue?', ()=>{
+    state = { courses:[], zones:[], crossDist:{}, sameZoneMin:3, buildingCoords:{}, weights:{rating:.5,travel:.3,seats:.2}, excluded:new Set(), quarterLabel:'', defaultRatingForUnknown:3.0, includeInvalidPlans:false, courseCountLimit:null, lastImportAt:null };
+    colorCounter = 0;
+    historyStack = []; historyIndex = -1; dirty = false;
+    seedBuildingCoords();
+    saveWeightsToInputs();
+    document.getElementById('quarterLabel').value = '';
+    document.getElementById('quarterSelect').value = '';
+    renderBuildingCoords();
+    render();
+    toast('Cleared. Starting fresh.');
+  });
+}
+
+/* ================= TOAST ================= */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+/* ================= SELF-TEST SUITE ================= */
+/*
+  This is a plain HTML/JS artifact with no build step or test runner, so regression tests live here
+  as in-page assertions against known-answer cases. Run via the "Run Self-Tests" button in the
+  Zones & Weights tab, or from the console with runSelfTests().
+*/
+function assertEqual(actual, expected, label, results){
+  const pass = JSON.stringify(actual) === JSON.stringify(expected);
+  results.push({ pass, label, detail: pass ? '' : `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}` });
+}
+function assertTrue(cond, label, results){
+  results.push({ pass: !!cond, label, detail: cond ? '' : 'expected truthy value' });
+}
+function runSelfTests(){
+  const results = [];
+
+  // --- Time / overlap ---
+  assertEqual(toMin('09:30'), 570, 'toMin parses HH:MM', results);
+  assertTrue(overlap({days:['M'],start:'09:00',end:'10:00'}, {days:['M'],start:'09:59',end:'10:30'}), 'overlap detects 1-min overlap', results);
+  assertTrue(!overlap({days:['M'],start:'09:00',end:'10:00'}, {days:['M'],start:'10:00',end:'11:00'}), 'touching edges do NOT conflict', results);
+  assertTrue(!overlap({days:['M'],start:'09:00',end:'10:00'}, {days:['T'],start:'09:00',end:'10:00'}), 'different days never conflict', results);
+
+  // --- Validator ---
+  assertTrue(Validator.ratingValid(4.5) && Validator.ratingValid(0) && Validator.ratingValid(5), 'rating accepts 0..5', results);
+  assertTrue(!Validator.ratingValid(5.01) && !Validator.ratingValid(-1) && !Validator.ratingValid(NaN), 'rating rejects out-of-range/NaN', results);
+  assertTrue(Validator.seatsValid(0,25) && !Validator.seatsValid(30,25) && !Validator.seatsValid(-1,25) && !Validator.seatsValid(3.2,25), 'seats validation (integers, open<=total, >=0)', results);
+  assertTrue(Validator.timeRangeValid('09:00','09:50') && !Validator.timeRangeValid('10:00','09:50') && !Validator.timeRangeValid('24:00','09:50'), 'time range validation', results);
+  assertTrue(Validator.latLngValid(34.41,-119.84) && !Validator.latLngValid(91,-119) && !Validator.latLngValid(34,181), 'lat/lng range validation', results);
+  assertEqual(Validator.normalizeDays(['F','M','M','W']), ['M','W','F'], 'day normalization dedupes + orders M..F', results);
+  assertEqual(Validator.normalizeCourseCode('math3a'), 'MATH 3A', 'course code normalization inserts space + uppercases', results);
+
+  // --- Walking distance ---
+  const same = walkMinutes({lat:34.4140,lng:-119.8489}, {lat:34.4140,lng:-119.8489});
+  assertTrue(same>=1 && same<=3, `identical coordinates ≈2 min buffer (got ${same})`, results);
+  const near = walkMinutes({lat:34.4140,lng:-119.8489}, {lat:34.4185,lng:-119.8489}); // ~500m north
+  assertTrue(near>=6 && near<=11, `~500m apart ≈ 8 min (got ${near})`, results);
+
+  // --- GOLD parser, using the exact MATH 3A block from real GOLD paste ---
+  const sampleGold =
+`MATH 3A\tCALC WITH APPLI 1\t\t\t\tPORTER M J
+M W F\t9:00 am - 9:50 am\tBUCHN1910\t131 / 144
+MATH 3A\t\tFull\t29694\t\tT\t8:00 am - 8:50 am\tGIRV 2119\t25 / 25
+MATH 3A\t\t\t29710\t\tT\t6:00pm - 6:50pm\tGIRV 2116\t15 / 25`;
+  const parsed = GoldParser.parse(sampleGold);
+  assertEqual(parsed.courses.length, 1, 'GOLD parser finds exactly 1 course', results);
+  if(parsed.courses.length===1){
+    const c = parsed.courses[0];
+    assertEqual(c.code, 'MATH 3A', 'GOLD parser normalizes course code', results);
+    assertEqual(c.lectures.length, 1, 'GOLD parser finds 1 lecture (MWF)', results);
+    if(c.lectures.length===1){
+      const lec = c.lectures[0];
+      assertEqual(lec.instructor, 'PORTER M J', 'GOLD parser extracts instructor from header line', results);
+      assertEqual(lec.blocks[0].days, ['M','W','F'], 'GOLD parser reads MWF from continuation line', results);
+      assertEqual(lec.blocks[0].start, '09:00', 'GOLD parser converts "9:00 am" to 24h', results);
+      assertEqual(lec.sections.length, 2, 'GOLD parser attaches 2 sections to the lecture', results);
+      if(lec.sections.length===2){
+        assertTrue(lec.sections[0]._closed===true, 'GOLD parser marks "Full" section as closed', results);
+        assertTrue(lec.sections[1]._closed===false, 'GOLD parser leaves open section unmarked', results);
+        assertEqual(lec.sections[1].blocks[0].start, '18:00', 'GOLD parser converts "6:00pm" (no space) to 24h', results);
+      }
+    }
+  }
+
+  // --- Description parser ---
+  const sampleDesc = `Full Title:\tDifferential Equations
+Description:\tFirst and second order differential equations, separation of variables.
+PreRequisite:\tMath 4A or Math 4AI with a minimum grade of C.
+College:\tL&S
+Units:\t4.0
+Grading:\tOptional`;
+  const desc = parseDescriptionBlock(sampleDesc);
+  assertEqual(desc.title, 'Differential Equations', 'description parser reads Full Title', results);
+  assertEqual(desc.units, '4.0', 'description parser reads Units', results);
+  assertEqual(desc.college, 'L&S', 'description parser reads College', results);
+
+  // --- Building database (name-only entries never fabricate coordinates) ---
+  assertEqual(expandBuildingName('GIRV 2119'), 'Girvetz Hall', 'building DB expands GIRV', results);
+  assertEqual(expandBuildingName('BUCHN1910'), 'Buchanan Hall', 'building DB expands BUCHN (no space)', results);
+  assertTrue(lookupBuildingCoords('GIRV 1004') !== null, 'building DB has verified coords for GIRV', results);
+  assertTrue(lookupBuildingCoords('MADEUPBLDG 999') === null, 'building DB returns null for unrecognized codes (no guessing)', results);
+
+  // --- Course-count-limit helpers (pure functions — safe to test without touching your course list) ---
+  const kc = kCombinations([1,2,3,4], 2, 100);
+  assertEqual(kc.list.length, 6, 'kCombinations(4 choose 2) = 6', results);
+  assertTrue(!kc.truncated, 'kCombinations under the cap is not truncated', results);
+  const kcCapped = kCombinations([1,2,3,4,5,6], 3, 5);
+  assertTrue(kcCapped.truncated, 'kCombinations over the cap reports truncated', results);
+  const unitResult = sumUnits([
+    { course:{id:'x1', units:'4'}, lec:{blocks:[]}, sec:null },
+    { course:{id:'x2', units:'4.0'}, lec:{blocks:[]}, sec:null },
+    { course:{id:'x3', units:''}, lec:{blocks:[]}, sec:null },
+  ]);
+  assertEqual(unitResult.total, 8, 'sumUnits adds numeric unit strings correctly', results);
+  assertEqual(unitResult.missing, 1, 'sumUnits counts courses with no parseable units separately', results);
+
+  // --- Render results ---
+  const el = document.getElementById('qaResults');
+  el.style.display = 'block';
+  const passCount = results.filter(r=>r.pass).length;
+  let out = `${passCount}/${results.length} tests passed\n\n`;
+  results.forEach(r=>{
+    out += (r.pass ? '✓ ' : '✗ ') + r.label + (r.detail ? '  ('+r.detail+')' : '') + '\n';
+  });
+  el.innerHTML = `<span class="${passCount===results.length?'pass':'fail'}">${out.split('\n')[0]}</span>\n` +
+    results.map(r=>`<span class="${r.pass?'pass':'fail'}">${r.pass?'✓':'✗'} ${r.label}${r.detail?'  ('+r.detail+')':''}</span>`).join('\n');
+  toast(`${passCount}/${results.length} self-tests passed.`);
+  return results;
+}
+
+/* ================= COLLAPSIBLE COURSE CARDS ================= */
+/* UI-only state (not saved to backups): which course cards are collapsed in the editor. */
+let collapsedCourses = new Set();
+function toggleCourseCollapse(cid, btn){
+  const card = btn.closest('.course-card');
+  if(!card) return;
+  const nowCollapsed = card.classList.toggle('collapsed');
+  if(nowCollapsed) collapsedCourses.add(cid); else collapsedCourses.delete(cid);
+  btn.setAttribute('aria-expanded', String(!nowCollapsed));
+}
+function setAllCollapsed(collapsed){
+  collapsedCourses = collapsed ? new Set(state.courses.map(c=>c.id)) : new Set();
+  document.querySelectorAll('#courseList .course-card').forEach(card=>{
+    card.classList.toggle('collapsed', collapsed);
+    const btn = card.querySelector('.course-toggle');
+    if(btn) btn.setAttribute('aria-expanded', String(!collapsed));
+  });
+}
+
+/* ================= BACKGROUND CUSTOMIZATION ================= */
+/* Stored in localStorage (survives reload in a real browser) rather than the JSON backup,
+   so a large data-URL image doesn't bloat your exported schedules. */
+let currentBg = null;
+let bgOverlay = 0.86;
+const BG_KEY = 'ucsb_bg_image', BG_OV_KEY = 'ucsb_bg_overlay';
+function applyBackground(dataUrl, overlay){
+  const b = document.body;
+  const ov = (overlay!=null ? overlay : bgOverlay);
+  if(!dataUrl){
+    b.style.backgroundImage = '';
+    b.style.backgroundAttachment = '';
+    return;
+  }
+  b.style.backgroundImage =
+    `linear-gradient(rgba(250,246,236,${ov}), rgba(250,246,236,${ov})), url("${dataUrl}")`;
+  b.style.backgroundSize = 'cover';
+  b.style.backgroundPosition = 'center';
+  b.style.backgroundAttachment = 'fixed';
+  b.style.backgroundRepeat = 'no-repeat';
+}
+function saveBgToStorage(){
+  try{
+    if(currentBg){ localStorage.setItem(BG_KEY, currentBg); localStorage.setItem(BG_OV_KEY, String(bgOverlay)); }
+    else { localStorage.removeItem(BG_KEY); localStorage.removeItem(BG_OV_KEY); }
+  }catch(e){ /* storage unavailable (e.g. sandboxed preview) — background still applies for this session */ }
+}
+function loadBgFromStorage(){
+  try{
+    const ov = parseFloat(localStorage.getItem(BG_OV_KEY));
+    if(!isNaN(ov)) bgOverlay = ov;
+    const d = localStorage.getItem(BG_KEY);
+    if(d){ currentBg = d; applyBackground(currentBg, bgOverlay); }
+  }catch(e){ /* ignore */ }
+}
+function openBgModal(){
+  document.getElementById('bgModal').style.display = 'flex';
+  const slider = document.getElementById('bgOverlay');
+  slider.value = bgOverlay;
+  document.getElementById('bgOverlayVal').textContent = Number(bgOverlay).toFixed(2);
+  updateBgPreview();
+}
+function closeBgModal(){ document.getElementById('bgModal').style.display = 'none'; }
+function updateBgPreview(){
+  const p = document.getElementById('bgPreview');
+  if(currentBg){ p.style.backgroundImage = `url("${currentBg}")`; p.textContent = ''; }
+  else { p.style.backgroundImage = ''; p.textContent = 'No custom background yet'; }
+}
+function handleBgFile(evt){
+  const file = evt.target.files && evt.target.files[0];
+  evt.target.value = ''; // allow re-selecting the same file later
+  if(!file) return;
+  if(!/^image\//.test(file.type)){ toast('Please choose an image file (JPG, PNG, or WebP).'); return; }
+  if(file.size > 8*1024*1024){ toast('That image is over 8 MB — pick a smaller/compressed file for best performance.'); return; }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    currentBg = reader.result;
+    applyBackground(currentBg, bgOverlay);
+    saveBgToStorage();
+    updateBgPreview();
+    toast('Background applied.');
+  };
+  reader.onerror = ()=> toast('Could not read that image — try a different file.');
+  reader.readAsDataURL(file);
+}
+function onBgOverlayChange(){
+  bgOverlay = Number(document.getElementById('bgOverlay').value);
+  document.getElementById('bgOverlayVal').textContent = bgOverlay.toFixed(2);
+  if(currentBg){ applyBackground(currentBg, bgOverlay); saveBgToStorage(); }
+}
+function removeBackground(){
+  currentBg = null;
+  applyBackground(null);
+  saveBgToStorage();
+  updateBgPreview();
+  toast('Background removed.');
+}
+
+/* ================= PRINT ================= */
+/* window.print() alone is unreliable: inside sandboxed preview frames it is often a no-op, and it
+   also prints whatever tab happens to be active. This opens a dedicated print window containing only
+   the current plan, which prints correctly both as a standalone file and inside the preview. */
+function printPlan(){
+  if(!plans.length || !plans[currentPlanIdx]){ toast('No plan to print yet — add courses and pick a plan first.'); return; }
+  const ticket = document.querySelector('#ticketArea .ticket');
+  if(!ticket){ toast('Open the Plan Deck tab and select a plan, then print.'); return; }
+  const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"], link[rel="preconnect"]'))
+    .map(n=>n.outerHTML).join('\n');
+  const label = (state.quarterLabel ? state.quarterLabel + ' \u00b7 ' : '') + planLetter(currentPlanIdx);
+  const win = window.open('', 'printPlanWindow');
+  if(!win){ // popup blocked — fall back to native print of the current page
+    window.print();
+    return;
+  }
+  win.document.open();
+  win.document.write(
+    '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>' + esc(label) + '</title>' + styles +
+    '<style>' +
+      'body{background:#fff;margin:0;padding:20px;}' +
+      '.ticket{box-shadow:none;border:1px solid #999;}' +
+      '.ticket-actions,.btn{display:none !important;}' +
+      '.print-only{display:block !important;}' +
+      '.print-hint{font-family:\'IBM Plex Sans\',sans-serif;font-size:12px;color:#5B6672;margin-bottom:14px;}' +
+      '@media print{.print-hint{display:none;}}' +
+    '</style></head><body>' +
+    '<div class="print-hint">If the print dialog does not open on its own, press Ctrl/Cmd + P. You can close this tab afterward.</div>' +
+    ticket.outerHTML +
+    '<scr'+'ipt>window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},300);};<\/scr'+'ipt>' +
+    '</body></html>'
+  );
+  win.document.close();
+}
+
+/* ================= INIT ================= */
+saveWeightsToInputs();
+resyncColorIdx(); ensureCourseSelectionDefaults();
+seedBuildingCoords();
+loadQuarterSlotsIndex();
+refreshQuarterDropdown();
+render();
+loadBgFromStorage();
+showStartupQuarterPrompt();
+</script>
+</body>
+</html>
